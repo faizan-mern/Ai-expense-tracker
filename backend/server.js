@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 require("./config/env");
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
@@ -18,6 +19,8 @@ app.get("/api/health", (req, res) => {
     service: "ai-expense-tracker-backend",
   });
 });
+
+app.use("/api/auth", authRoutes);
 
 const PORT = process.env.PORT || 5000;
 

@@ -6,16 +6,19 @@ The goal is not only to finish the app, but to build it in a way that is easy to
 
 ## Current Status
 
-Phase 1 is in progress.
+Phase 1 is complete.
+Phase 2 database design is now added to the repository.
 
 What already exists:
 - A basic Express backend
 - PostgreSQL connection setup file
 - Environment variable support
 - Project planning and handoff documentation
+- PostgreSQL schema file
+- PostgreSQL seed file
+- Database helper scripts
 
 What is not built yet:
-- Database schema
 - Authentication APIs
 - Expense, budget, and alert APIs
 - AI integration with LangChain/LangGraph
@@ -28,7 +31,8 @@ Read these files in order:
 1. [`docs/PROJECT_CONTEXT.md`](E:/Cyberify/ai-expense-tracker/docs/PROJECT_CONTEXT.md)
 2. [`docs/IMPLEMENTATION_PLAN.md`](E:/Cyberify/ai-expense-tracker/docs/IMPLEMENTATION_PLAN.md)
 3. [`docs/DATABASE_SETUP.md`](E:/Cyberify/ai-expense-tracker/docs/DATABASE_SETUP.md)
-4. [`docs/AI_HANDOFF.md`](E:/Cyberify/ai-expense-tracker/docs/AI_HANDOFF.md)
+4. [`docs/SCHEMA_EXPLAINED.md`](E:/Cyberify/ai-expense-tracker/docs/SCHEMA_EXPLAINED.md)
+5. [`docs/AI_HANDOFF.md`](E:/Cyberify/ai-expense-tracker/docs/AI_HANDOFF.md)
 
 ## Backend Quick Start
 
@@ -36,6 +40,9 @@ Read these files in order:
 cd E:\Cyberify\ai-expense-tracker\backend
 copy .env.example .env
 npm install
+npm.cmd run db:check
+npm.cmd run db:schema
+npm.cmd run db:seed
 npm run dev
 ```
 
