@@ -17,10 +17,11 @@ What already exists:
 - PostgreSQL schema file
 - PostgreSQL seed file
 - Database helper scripts
+- Authentication APIs
+- Expense APIs
 
 What is not built yet:
-- Authentication APIs
-- Expense, budget, and alert APIs
+- Budget and alert APIs
 - AI integration with LangChain/LangGraph
 - React frontend
 
@@ -32,7 +33,8 @@ Read these files in order:
 2. [`docs/IMPLEMENTATION_PLAN.md`](E:/Cyberify/ai-expense-tracker/docs/IMPLEMENTATION_PLAN.md)
 3. [`docs/DATABASE_SETUP.md`](E:/Cyberify/ai-expense-tracker/docs/DATABASE_SETUP.md)
 4. [`docs/SCHEMA_EXPLAINED.md`](E:/Cyberify/ai-expense-tracker/docs/SCHEMA_EXPLAINED.md)
-5. [`docs/AI_HANDOFF.md`](E:/Cyberify/ai-expense-tracker/docs/AI_HANDOFF.md)
+5. [`docs/EXPENSE_SYSTEM_EXPLAINED.md`](E:/Cyberify/ai-expense-tracker/docs/EXPENSE_SYSTEM_EXPLAINED.md)
+6. [`docs/AI_HANDOFF.md`](E:/Cyberify/ai-expense-tracker/docs/AI_HANDOFF.md)
 
 ## Backend Quick Start
 

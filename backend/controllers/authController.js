@@ -69,7 +69,7 @@ async function register(req, res) {
       message: "User registered successfully",
       token,
       user: {
-        id: user.id,
+        id: Number(user.id),
         fullName: user.full_name,
         email: user.email,
         createdAt: user.created_at,
@@ -128,7 +128,7 @@ async function login(req, res) {
       message: "Login successful",
       token,
       user: {
-        id: user.id,
+        id: Number(user.id),
         fullName: user.full_name,
         email: user.email,
         createdAt: user.created_at,
@@ -164,7 +164,7 @@ async function getCurrentUser(req, res) {
     return res.status(200).json({
       success: true,
       user: {
-        id: user.id,
+        id: Number(user.id),
         fullName: user.full_name,
         email: user.email,
         createdAt: user.created_at,
