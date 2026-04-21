@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-require("dotenv").config();
+require("./config/env");
 
 const app = express();
 
@@ -9,6 +9,14 @@ app.use(express.json());
 
 app.get("/", (req, res) => {
   res.send("API is running");
+});
+
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Backend is healthy",
+    service: "ai-expense-tracker-backend",
+  });
 });
 
 const PORT = process.env.PORT || 5000;
