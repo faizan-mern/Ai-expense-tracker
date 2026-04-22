@@ -1,4 +1,5 @@
 const pool = require("../db");
+const { evaluateAlertsForExpense } = require("../services/budgetAlertService");
 
 function isValidDateString(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value));
@@ -104,11 +105,14 @@ async function createExpense(req, res) {
     );
 
     const savedExpense = await findExpenseById(insertResult.rows[0].id, userId);
+    const mappedExpense = mapExpenseRow(savedExpense);
+
+    await evaluateAlertsForExpense(mappedExpense);
 
     return res.status(201).json({
       success: true,
       message: "Expense created successfully",
-      expense: mapExpenseRow(savedExpense),
+      expense: mappedExpense,
     });
   } catch (error) {
     return res.status(500).json({
@@ -254,11 +258,14 @@ async function updateExpense(req, res) {
     );
 
     const updatedExpense = await findExpenseById(expenseId, userId);
+    const mappedExpense = mapExpenseRow(updatedExpense);
+
+    await evaluateAlertsForExpense(mappedExpense);
 
     return res.status(200).json({
       success: true,
       message: "Expense updated successfully",
-      expense: mapExpenseRow(updatedExpense),
+      expense: mappedExpense,
     });
   } catch (error) {
     return res.status(500).json({
