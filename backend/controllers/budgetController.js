@@ -1,4 +1,5 @@
 const pool = require("../db");
+const { findAccessibleCategoryById } = require("../services/categoryService");
 const {
   evaluateBudgetAlertsForBudgetId,
 } = require("../services/budgetAlertService");
@@ -36,18 +37,6 @@ function mapBudgetRow(row) {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
-}
-
-async function findAccessibleCategory(categoryId, userId) {
-  const result = await pool.query(
-    `SELECT id, name
-     FROM categories
-     WHERE id = $1
-       AND (user_id IS NULL OR user_id = $2)`,
-    [categoryId, userId]
-  );
-
-  return result.rows[0] || null;
 }
 
 async function getBudgetWithUsageById(budgetId, userId) {
@@ -102,7 +91,7 @@ async function upsertBudget(req, res) {
     let normalizedCategoryId = null;
 
     if (categoryId !== undefined && categoryId !== null && categoryId !== "") {
-      const category = await findAccessibleCategory(categoryId, userId);
+      const category = await findAccessibleCategoryById(categoryId, userId);
 
       if (!category) {
         return res.status(404).json({

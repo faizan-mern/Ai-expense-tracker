@@ -1,63 +1,13 @@
 const pool = require("../db");
-const { evaluateAlertsForExpense } = require("../services/budgetAlertService");
+const {
+  createExpenseForUser,
+  findExpenseById,
+  mapExpenseRow,
+  updateExpenseForUser,
+} = require("../services/expenseService");
 
 function isValidDateString(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value));
-}
-
-function normalizeNote(note) {
-  if (note === undefined || note === null || note === "") {
-    return null;
-  }
-
-  return String(note).trim();
-}
-
-async function findAccessibleCategory(categoryId, userId) {
-  const result = await pool.query(
-    `SELECT id, name, is_default, user_id
-     FROM categories
-     WHERE id = $1
-       AND (user_id IS NULL OR user_id = $2)`,
-    [categoryId, userId]
-  );
-
-  return result.rows[0] || null;
-}
-
-async function findExpenseById(expenseId, userId) {
-  const result = await pool.query(
-    `SELECT
-       e.id,
-       e.user_id,
-       e.category_id,
-       c.name AS category_name,
-       e.amount,
-       TO_CHAR(e.expense_date, 'YYYY-MM-DD') AS expense_date,
-       e.note,
-       e.created_at,
-       e.updated_at
-     FROM expenses e
-     JOIN categories c ON c.id = e.category_id
-     WHERE e.id = $1 AND e.user_id = $2`,
-    [expenseId, userId]
-  );
-
-  return result.rows[0] || null;
-}
-
-function mapExpenseRow(row) {
-  return {
-    id: Number(row.id),
-    userId: Number(row.user_id),
-    categoryId: Number(row.category_id),
-    categoryName: row.category_name,
-    amount: Number(row.amount),
-    expenseDate: row.expense_date,
-    note: row.note,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
 }
 
 async function createExpense(req, res) {
@@ -88,33 +38,27 @@ async function createExpense(req, res) {
   }
 
   try {
-    const category = await findAccessibleCategory(categoryId, userId);
-
-    if (!category) {
-      return res.status(404).json({
-        success: false,
-        message: "Category not found or not accessible",
-      });
-    }
-
-    const insertResult = await pool.query(
-      `INSERT INTO expenses (user_id, category_id, amount, expense_date, note)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING id`,
-      [userId, category.id, parsedAmount, expenseDate, normalizeNote(note)]
-    );
-
-    const savedExpense = await findExpenseById(insertResult.rows[0].id, userId);
-    const mappedExpense = mapExpenseRow(savedExpense);
-
-    await evaluateAlertsForExpense(mappedExpense);
+    const savedExpense = await createExpenseForUser({
+      userId,
+      amount: parsedAmount,
+      categoryId,
+      expenseDate,
+      note,
+    });
 
     return res.status(201).json({
       success: true,
       message: "Expense created successfully",
-      expense: mappedExpense,
+      expense: savedExpense,
     });
   } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
     return res.status(500).json({
       success: false,
       message: "Failed to create expense",
@@ -228,46 +172,28 @@ async function updateExpense(req, res) {
   }
 
   try {
-    const existingExpense = await findExpenseById(expenseId, userId);
-
-    if (!existingExpense) {
-      return res.status(404).json({
-        success: false,
-        message: "Expense not found",
-      });
-    }
-
-    const category = await findAccessibleCategory(categoryId, userId);
-
-    if (!category) {
-      return res.status(404).json({
-        success: false,
-        message: "Category not found or not accessible",
-      });
-    }
-
-    await pool.query(
-      `UPDATE expenses
-       SET category_id = $1,
-           amount = $2,
-           expense_date = $3,
-           note = $4,
-           updated_at = NOW()
-       WHERE id = $5 AND user_id = $6`,
-      [category.id, parsedAmount, expenseDate, normalizeNote(note), expenseId, userId]
-    );
-
-    const updatedExpense = await findExpenseById(expenseId, userId);
-    const mappedExpense = mapExpenseRow(updatedExpense);
-
-    await evaluateAlertsForExpense(mappedExpense);
+    const updatedExpense = await updateExpenseForUser({
+      expenseId,
+      userId,
+      amount: parsedAmount,
+      categoryId,
+      expenseDate,
+      note,
+    });
 
     return res.status(200).json({
       success: true,
       message: "Expense updated successfully",
-      expense: mappedExpense,
+      expense: updatedExpense,
     });
   } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
     return res.status(500).json({
       success: false,
       message: "Failed to update expense",
