@@ -2,15 +2,14 @@
 
 This repository is for a company hiring task: build an AI Expense Tracker web application with smart alerts.
 
-The goal is not only to finish the app, but to build it in a way that is easy to learn, explain, and continue in a new chat or with a new AI assistant.
+The goal is not only to finish the app, but to build it in a way that is easy to learn, explain, and continue in a new chat 
 
 ## Current Status
 
-Phase 1 is complete.
-Phase 2 database design is now added to the repository.
+The backend foundation is implemented and a minimal AI backend flow is now scaffolded.
 
 What already exists:
-- A basic Express backend
+- An Express backend
 - PostgreSQL connection setup file
 - Environment variable support
 - Project planning and handoff documentation
@@ -19,11 +18,16 @@ What already exists:
 - Database helper scripts
 - Authentication APIs
 - Expense APIs
+- Category APIs
+- Budget APIs
+- Alert APIs
+- Shared expense/category services
+- Minimal AI route/controller/graph structure
 
 What is not built yet:
-- Budget and alert APIs
-- AI integration with LangChain/LangGraph
-- React frontend
+- Dynamic AI settings/model management
+- React frontend application
+- Final submission polish and demo assets
 
 ## Project Docs
 
@@ -52,6 +56,17 @@ Useful endpoints:
 
 - `GET /`
 - `GET /api/health`
+- `POST /api/ai/parse-expense`
+
+To use the AI endpoint, add these values to `backend/.env`:
+
+```env
+AI_API_KEY=your_openrouter_api_key
+AI_MODEL=openai/gpt-4o-mini
+AI_BASE_URL=https://openrouter.ai/api/v1
+```
+
+`backend/.env` is local-only and should stay untracked. Use `backend/.env.example` as the safe template for the repo.
 
 ## Planned High-Level Structure
 
