@@ -1,3 +1,4 @@
+import { CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { parseExpenseWithAi } from "../api/aiApi";
 import { formatCurrency, formatDateLabel } from "../utils/formatters";
@@ -53,7 +54,7 @@ export default function AiAssistantPage() {
           </div>
           <form className="stack-form" onSubmit={handleSubmit}>
             <label>
-              Example
+              Your expense description
               <textarea
                 rows="6"
                 value={text}
@@ -81,30 +82,39 @@ export default function AiAssistantPage() {
           </form>
         </section>
 
-        <section className="panel">
+        <section className={`panel${result ? " result-card" : ""}`}>
           <div className="panel-header">
             <div>
               <p className="eyebrow">Result</p>
               <h3>Saved expense preview</h3>
             </div>
           </div>
-          {!result ? (
+          {isSubmitting ? (
+            <p className="empty-state">Analyzing your expense with AI...</p>
+          ) : !result ? (
             <p className="empty-state">
               Submit a sentence and the structured result will appear here.
             </p>
           ) : (
             <div className="stack-group">
               <div>
-                <p className="eyebrow">Parsed expense</p>
-                <pre>{JSON.stringify(result.parsedExpense, null, 2)}</pre>
+                <div className="button-row" style={{ alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: "0.75rem" }}>
+                    <CheckCircle2 size={20} color="#16825d" />
+                    <div>
+                      <strong>Expense saved successfully</strong>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => setResult(null)}
+                  >
+                    Parse another expense
+                  </button>
+                </div>
               </div>
               <ul className="data-list">
-                <li>
-                  <div>
-                    <strong>Category</strong>
-                    <span>{result.expense.categoryName}</span>
-                  </div>
-                </li>
                 <li>
                   <div>
                     <strong>Amount</strong>
@@ -113,11 +123,24 @@ export default function AiAssistantPage() {
                 </li>
                 <li>
                   <div>
+                    <strong>Category</strong>
+                    <span>{result.expense.categoryName}</span>
+                  </div>
+                </li>
+                <li>
+                  <div>
                     <strong>Date</strong>
                     <span>{formatDateLabel(result.expense.expenseDate)}</span>
                   </div>
                 </li>
+                <li>
+                  <div>
+                    <strong>Note</strong>
+                    <span>{result.expense.note || "—"}</span>
+                  </div>
+                </li>
               </ul>
+              <p className="empty-state">This expense has been added to your records.</p>
             </div>
           )}
         </section>
