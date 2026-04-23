@@ -8,6 +8,7 @@ import ExpensesPage from "./pages/ExpensesPage";
 import BudgetsPage from "./pages/BudgetsPage";
 import AlertsPage from "./pages/AlertsPage";
 import AiAssistantPage from "./pages/AiAssistantPage";
+import AiSettingsPage from "./pages/AiSettingsPage";
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
         <Route path="budgets" element={<BudgetsPage />} />
         <Route path="alerts" element={<AlertsPage />} />
         <Route path="ai" element={<AiAssistantPage />} />
+        <Route path="settings" element={<AiSettingsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

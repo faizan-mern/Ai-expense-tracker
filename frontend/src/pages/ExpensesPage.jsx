@@ -385,7 +385,7 @@ export default function ExpensesPage() {
         </div>
 
         {isLoading ? (
-          <p className="empty-state">Loading expenses...</p>
+          <div className="loading-pulse">Loading...</div>
         ) : expenses.length === 0 ? (
           <p className="empty-state">No expenses found for the current selection.</p>
         ) : (
@@ -404,7 +404,9 @@ export default function ExpensesPage() {
                 {expenses.map((expense) => (
                   <tr key={expense.id}>
                     <td>{formatDateLabel(expense.expenseDate)}</td>
-                    <td>{expense.categoryName}</td>
+                    <td>
+                      <span className="category-pill">{expense.categoryName}</span>
+                    </td>
                     <td>{formatCurrency(expense.amount)}</td>
                     <td>{expense.note || "-"}</td>
                     <td className="table-actions">

@@ -1,6 +1,28 @@
+import { AlertTriangle, TrendingDown, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { fetchAlerts, markAlertAsRead } from "../api/alertApi";
 import { formatDateTimeLabel } from "../utils/formatters";
+
+function getAlertTypeMeta(alertType) {
+  if (alertType === "budget_exceeded") {
+    return {
+      Icon: TrendingDown,
+      color: "var(--danger)",
+    };
+  }
+
+  if (alertType === "near_limit") {
+    return {
+      Icon: AlertTriangle,
+      color: "#d97706",
+    };
+  }
+
+  return {
+    Icon: Zap,
+    color: "#7c3aed",
+  };
+}
 
 export default function AlertsPage() {
   const [alerts, setAlerts] = useState([]);
@@ -57,7 +79,7 @@ export default function AlertsPage() {
           <p className="eyebrow">Alerts</p>
           <h2>Review the signals that need attention.</h2>
           <p className="page-copy">
-            Keep unread warnings visible and clear them once you’ve checked the spending pattern behind them.
+            Keep unread warnings visible and clear them once you've checked the spending pattern behind them.
           </p>
         </div>
         <label className="inline-toggle">
@@ -87,31 +109,38 @@ export default function AlertsPage() {
 
       <section className="panel">
         {isLoading ? (
-          <p className="empty-state">Loading alerts...</p>
+          <div className="loading-pulse">Loading...</div>
         ) : alerts.length === 0 ? (
           <p className="empty-state">No alerts for the current filter.</p>
         ) : (
           <ul className="alert-list">
-            {alerts.map((alert) => (
-              <li key={alert.id} className={!alert.isRead ? "unread" : ""}>
-                <div>
-                  <p className="eyebrow">{alert.alertType.replace(/_/g, " ")}</p>
-                  <strong>{alert.message}</strong>
-                  <small>{formatDateTimeLabel(alert.createdAt)}</small>
-                </div>
-                {!alert.isRead ? (
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={() => handleMarkAsRead(alert.id)}
-                  >
-                    Mark as read
-                  </button>
-                ) : (
-                  <span className="status-pill">Read</span>
-                )}
-              </li>
-            ))}
+            {alerts.map((alert) => {
+              const { Icon, color } = getAlertTypeMeta(alert.alertType);
+
+              return (
+                <li key={alert.id} className={!alert.isRead ? "unread" : ""}>
+                  <div>
+                    <div className="alert-eyebrow">
+                      <Icon size={16} color={color} />
+                      <p className="eyebrow">{alert.alertType.replace(/_/g, " ")}</p>
+                    </div>
+                    <strong>{alert.message}</strong>
+                    <small>{formatDateTimeLabel(alert.createdAt)}</small>
+                  </div>
+                  {!alert.isRead ? (
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={() => handleMarkAsRead(alert.id)}
+                    >
+                      Mark as read
+                    </button>
+                  ) : (
+                    <span className="status-pill">Read</span>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>

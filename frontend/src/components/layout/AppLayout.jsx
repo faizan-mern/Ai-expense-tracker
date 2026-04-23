@@ -94,6 +94,7 @@ export default function AppLayout() {
             <LogOut size={18} />
             <span>Logout</span>
           </button>
+          <span className="version-badge">v1.0.0 · Hiring Demo</span>
         </div>
       </aside>
 

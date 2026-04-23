@@ -255,7 +255,7 @@ label {
 .page {
   display: grid;
   gap: var(--space-5);
-  animation: fade-up 0.4s ease;
+  animation: fade-up 0.3s ease;
 }
 
 .page-header,
@@ -553,6 +553,7 @@ th {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.35rem;
   padding: 0.38rem 0.72rem;
   border-radius: 999px;
   background: rgba(22, 130, 93, 0.12);
@@ -574,6 +575,28 @@ th {
 
 .inline-toggle input {
   width: auto;
+}
+
+.auth-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.75rem;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.alert-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.alert-eyebrow .eyebrow {
+  margin: 0;
 }
 
 pre {
@@ -647,7 +670,7 @@ pre {
 @keyframes fade-up {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(6px);
   }
 
   to {
@@ -839,6 +862,39 @@ pre {
   flex: 1;
 }
 
+tbody tr:nth-child(even) {
+  background: var(--surface-soft);
+}
+
+.category-pill {
+  display: inline-block;
+  padding: 2px 10px;
+  background: rgba(22, 130, 93, 0.1);
+  color: var(--accent-dark);
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.loading-pulse {
+  color: var(--muted);
+  font-size: 0.9rem;
+  padding: var(--space-5);
+  text-align: center;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+}
+
 @keyframes slide-in-right {
   from {
     opacity: 0;
@@ -849,4 +905,11 @@ pre {
     opacity: 1;
     transform: translateX(0);
   }
+}
+
+.version-badge {
+  font-size: 0.68rem;
+  color: rgba(238, 246, 241, 0.3);
+  text-align: center;
+  margin-top: auto;
 }

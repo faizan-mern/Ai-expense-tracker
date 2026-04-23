@@ -333,7 +333,7 @@ export default function BudgetsPage() {
           <span>{categoryBudgets.length} entries</span>
         </div>
         {isLoading ? (
-          <p className="empty-state">Loading budgets...</p>
+          <div className="loading-pulse">Loading...</div>
         ) : categoryBudgets.length === 0 ? (
           <p className="empty-state">No category budgets saved for this month yet.</p>
         ) : (

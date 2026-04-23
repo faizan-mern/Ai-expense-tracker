@@ -6,28 +6,23 @@ The goal is not only to finish the app, but to build it in a way that is easy to
 
 ## Current Status
 
-The backend foundation is implemented and a minimal AI backend flow is now scaffolded.
+The app is fully implemented — backend and frontend are both complete.
 
-What already exists:
-- An Express backend
-- PostgreSQL connection setup file
-- Environment variable support
-- Project planning and handoff documentation
-- PostgreSQL schema file
-- PostgreSQL seed file
-- Database helper scripts
-- Authentication APIs
-- Expense APIs
-- Category APIs
-- Budget APIs
-- Alert APIs
-- Shared expense/category services
-- Minimal AI route/controller/graph structure
+What is built:
+- Express backend with PostgreSQL
+- JWT authentication (register, login)
+- Full expense CRUD with category filtering and date filtering
+- Category management (predefined + custom)
+- Monthly and category budget management with live usage tracking
+- Automatic alert system (near_limit, budget_exceeded, unusual_expense)
+- LangGraph + LangChain AI pipeline for natural language expense creation
+- React frontend with Dashboard, Expenses, Budgets, Alerts, AI Assistant, AI Settings pages
+- Dynamic AI configuration (model, API key, system prompt) per user
+- PKR currency formatting
 
-What is not built yet:
-- Dynamic AI settings/model management
-- React frontend application
-- Final submission polish and demo assets
+What is left for optional polish:
+- Email notifications (optional feature from spec)
+- Recurring expenses (optional feature from spec)
 
 ## Project Docs
 
@@ -67,6 +62,26 @@ AI_BASE_URL=https://openrouter.ai/api/v1
 ```
 
 `backend/.env` is local-only and should stay untracked. Use `backend/.env.example` as the safe template for the repo.
+
+## Frontend Quick Start
+
+```powershell
+cd frontend
+copy .env.example .env
+npm install
+npm run dev
+```
+
+Mac/Linux:
+
+```bash
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
+```
+
+Open http://localhost:5173
 
 ## Planned High-Level Structure
 

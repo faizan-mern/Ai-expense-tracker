@@ -1,4 +1,13 @@
 import { useEffect, useState } from "react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { fetchAlerts } from "../api/alertApi";
 import { fetchBudgets } from "../api/budgetApi";
 import { fetchExpenses } from "../api/expenseApi";
@@ -7,6 +16,7 @@ import {
   formatDateLabel,
   formatMonthLabel,
   getCurrentMonthValue,
+  getMonthDateRange,
 } from "../utils/formatters";
 
 export default function DashboardPage() {
@@ -24,8 +34,9 @@ export default function DashboardPage() {
 
     async function loadDashboard() {
       try {
+        const { startDate, endDate } = getMonthDateRange(currentMonth);
         const [expensesResponse, budgetsResponse, alertsResponse] = await Promise.all([
-          fetchExpenses(),
+          fetchExpenses({ startDate, endDate }),
           fetchBudgets(currentMonth),
           fetchAlerts(),
         ]);
@@ -57,13 +68,7 @@ export default function DashboardPage() {
     };
   }, [currentMonth]);
 
-  const currentMonthExpenses = state.expenses.filter((expense) =>
-    expense.expenseDate.startsWith(currentMonth)
-  );
-  const totalSpent = currentMonthExpenses.reduce(
-    (sum, expense) => sum + Number(expense.amount),
-    0
-  );
+  const totalSpent = state.expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
   const unreadAlerts = state.alerts.filter((alert) => !alert.isRead).length;
   const overallBudget =
     state.budgets.find((budget) => budget.categoryId === null) || null;
@@ -71,6 +76,20 @@ export default function DashboardPage() {
   const remainingBudget = overallBudget
     ? Math.max(Number(overallBudget.amount) - totalSpent, 0)
     : null;
+  const spendingChartData = Array.from(
+    state.expenses.reduce((groups, expense) => {
+      const existingGroup = groups.get(expense.expenseDate) || 0;
+      groups.set(expense.expenseDate, existingGroup + Number(expense.amount));
+      return groups;
+    }, new Map()).entries()
+  )
+    .map(([expenseDate, amount]) => ({
+      expenseDate,
+      amount,
+      dateLabel: formatDateLabel(expenseDate),
+      dayLabel: String(Number(expenseDate.slice(8, 10))),
+    }))
+    .sort((left, right) => left.expenseDate.localeCompare(right.expenseDate));
 
   return (
     <section className="page">
@@ -91,7 +110,7 @@ export default function DashboardPage() {
         <article className="metric-card">
           <p className="eyebrow">Month spend</p>
           <strong>{formatCurrency(totalSpent)}</strong>
-          <span>{currentMonthExpenses.length} expenses logged this month</span>
+          <span>{state.expenses.length} expenses logged this month</span>
         </article>
         <article className="metric-card">
           <p className="eyebrow">Monthly budget</p>
@@ -114,6 +133,34 @@ export default function DashboardPage() {
         </article>
       </div>
 
+      <section className="panel">
+        <div className="panel-header">
+          <div>
+            <p className="eyebrow">Spending chart</p>
+            <h3>Daily breakdown</h3>
+          </div>
+          <span>Daily spending — {formatMonthLabel(currentMonth)}</span>
+        </div>
+        {state.isLoading ? (
+          <div className="loading-pulse">Loading...</div>
+        ) : spendingChartData.length === 0 ? (
+          <p className="empty-state">No spending data for this month yet.</p>
+        ) : (
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={spendingChartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
+              <XAxis dataKey="dayLabel" />
+              <YAxis hide />
+              <Tooltip
+                formatter={(value) => formatCurrency(value)}
+                labelFormatter={(_, payload) => payload?.[0]?.payload?.dateLabel || ""}
+              />
+              <Bar dataKey="amount" fill="#16825d" radius={[8, 8, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </section>
+
       <div className="workspace-grid">
         <section className="panel panel--soft">
           <div className="panel-header">
@@ -121,10 +168,10 @@ export default function DashboardPage() {
               <p className="eyebrow">Recent activity</p>
               <h3>Latest expenses</h3>
             </div>
-            <span>{currentMonthExpenses.length} this month</span>
+            <span>{state.expenses.length} this month</span>
           </div>
           {state.isLoading ? (
-            <p className="empty-state">Loading expenses...</p>
+            <div className="loading-pulse">Loading...</div>
           ) : state.expenses.length === 0 ? (
             <p className="empty-state">No expenses yet. Add your first transaction to activate the dashboard.</p>
           ) : (
@@ -153,7 +200,7 @@ export default function DashboardPage() {
             </div>
           </div>
           {state.isLoading ? (
-            <p className="empty-state">Loading budget usage...</p>
+            <div className="loading-pulse">Loading...</div>
           ) : state.budgets.length === 0 ? (
             <p className="empty-state">No budgets saved for this month yet.</p>
           ) : (
@@ -190,7 +237,7 @@ export default function DashboardPage() {
           <span>{state.alerts.length} total</span>
         </div>
         {state.isLoading ? (
-          <p className="empty-state">Loading alerts...</p>
+          <div className="loading-pulse">Loading...</div>
         ) : state.alerts.length === 0 ? (
           <p className="empty-state">No alerts yet. Budget and unusual-spend alerts will appear here.</p>
         ) : (

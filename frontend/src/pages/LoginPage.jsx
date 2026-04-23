@@ -1,3 +1,4 @@
+import { Bot } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -36,6 +37,10 @@ export default function LoginPage() {
   return (
     <div className="auth-shell">
       <div className="auth-panel">
+        <div className="auth-brand">
+          <Bot size={16} />
+          <span>AI Expense Tracker</span>
+        </div>
         <p className="eyebrow">Welcome back</p>
         <h1>Sign in to your expense workspace.</h1>
         <p className="auth-copy">

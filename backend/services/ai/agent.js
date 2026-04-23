@@ -1,6 +1,10 @@
 const { ChatOpenAI } = require("@langchain/openai");
 const { z } = require("zod");
 const { listAccessibleCategories } = require("../categoryService");
+const {
+  DEFAULT_SYSTEM_PROMPT,
+  getAiSettingsForUser,
+} = require("./settingsStore");
 
 const expenseExtractionSchema = z.object({
   amount: z.number().positive(),
@@ -13,10 +17,12 @@ function getTodayDateString() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function getAiConfig() {
-  const apiKey = process.env.AI_API_KEY;
-  const model = process.env.AI_MODEL;
-  const baseURL = process.env.AI_BASE_URL;
+function getAiConfig(userId) {
+  const userSettings = getAiSettingsForUser(userId);
+  const apiKey = userSettings?.apiKey || process.env.AI_API_KEY;
+  const model = userSettings?.model || process.env.AI_MODEL;
+  const baseURL = userSettings?.baseURL || process.env.AI_BASE_URL;
+  const systemPrompt = userSettings?.systemPrompt || DEFAULT_SYSTEM_PROMPT;
 
   if (!apiKey || !model) {
     const error = new Error(
@@ -30,6 +36,7 @@ function getAiConfig() {
     apiKey,
     model,
     baseURL: baseURL || undefined,
+    systemPrompt,
   };
 }
 
@@ -38,7 +45,7 @@ function buildCategoryPrompt(categories) {
 }
 
 async function parseExpenseTextWithAi({ userId, text }) {
-  const { apiKey, model, baseURL } = getAiConfig();
+  const { apiKey, model, baseURL, systemPrompt } = getAiConfig(userId);
   const categories = await listAccessibleCategories(userId);
 
   if (categories.length === 0) {
@@ -58,7 +65,7 @@ async function parseExpenseTextWithAi({ userId, text }) {
   });
 
   const prompt = [
-    "You extract a single expense from user text.",
+    systemPrompt,
     `Today's date is ${getTodayDateString()}.`,
     "Return one expense using the schema fields only.",
     "Choose categoryId only from this allowed list:",
