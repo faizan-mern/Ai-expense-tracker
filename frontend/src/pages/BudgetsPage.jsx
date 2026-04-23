@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchCategories } from "../api/categoryApi";
+import { useToast } from "../components/ui/Toast";
 import { deleteBudget, fetchBudgets, saveBudget } from "../api/budgetApi";
 import { fetchExpenses } from "../api/expenseApi";
 import {
@@ -19,6 +20,7 @@ const initialForm = {
 };
 
 export default function BudgetsPage() {
+  const { showToast } = useToast();
   const [categories, setCategories] = useState([]);
   const [budgets, setBudgets] = useState([]);
   const [monthExpenses, setMonthExpenses] = useState([]);
@@ -111,19 +113,27 @@ export default function BudgetsPage() {
 
       setForm(initialForm);
       await refreshBudgetWorkspace();
+      showToast("Budget saved", "success");
     } catch (submitError) {
       setError(submitError.message);
+      showToast(submitError.message, "error");
     }
   }
 
   async function handleDelete(budgetId) {
     setError("");
 
+    if (!window.confirm("Delete this budget?")) {
+      return;
+    }
+
     try {
       await deleteBudget(budgetId);
       await refreshBudgetWorkspace();
+      showToast("Budget deleted", "success");
     } catch (deleteError) {
       setError(deleteError.message);
+      showToast(deleteError.message, "error");
     }
   }
 

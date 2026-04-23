@@ -1,6 +1,7 @@
 import { CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { parseExpenseWithAi } from "../api/aiApi";
+import { useToast } from "../components/ui/Toast";
 import { formatCurrency, formatDateLabel } from "../utils/formatters";
 
 const samplePrompts = [
@@ -10,6 +11,7 @@ const samplePrompts = [
 ];
 
 export default function AiAssistantPage() {
+  const { showToast } = useToast();
   const [text, setText] = useState("");
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
@@ -25,8 +27,10 @@ export default function AiAssistantPage() {
       const response = await parseExpenseWithAi({ text });
       setResult(response);
       setText("");
+      showToast("Expense created with AI", "success");
     } catch (submitError) {
       setError(submitError.message);
+      showToast(submitError.message, "error");
     } finally {
       setIsSubmitting(false);
     }

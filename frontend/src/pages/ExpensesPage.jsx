@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createCategory, fetchCategories } from "../api/categoryApi";
+import { useToast } from "../components/ui/Toast";
 import {
   createExpense,
   deleteExpense,
@@ -32,6 +33,7 @@ const initialFilters = {
 };
 
 export default function ExpensesPage() {
+  const { showToast } = useToast();
   const [categories, setCategories] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [expenseForm, setExpenseForm] = useState(createInitialExpenseForm);
@@ -90,8 +92,10 @@ export default function ExpensesPage() {
     try {
       if (editingId) {
         await updateExpense(editingId, payload);
+        showToast("Expense updated", "success");
       } else {
         await createExpense(payload);
+        showToast("Expense saved", "success");
       }
 
       setExpenseForm(createInitialExpenseForm());
@@ -99,6 +103,7 @@ export default function ExpensesPage() {
       await loadExpenses();
     } catch (submitError) {
       setError(submitError.message);
+      showToast(submitError.message, "error");
     }
   }
 
@@ -119,6 +124,7 @@ export default function ExpensesPage() {
       setCategoryForm(initialCategoryForm);
     } catch (submitError) {
       setError(submitError.message);
+      showToast(submitError.message, "error");
     }
   }
 
@@ -131,6 +137,7 @@ export default function ExpensesPage() {
       await loadExpenses(filters);
     } catch (filterError) {
       setError(filterError.message);
+      showToast(filterError.message, "error");
     } finally {
       setIsLoading(false);
     }
@@ -154,11 +161,17 @@ export default function ExpensesPage() {
   async function handleDelete(expenseId) {
     setError("");
 
+    if (!window.confirm("Delete this expense? This cannot be undone.")) {
+      return;
+    }
+
     try {
       await deleteExpense(expenseId);
       await loadExpenses();
+      showToast("Expense deleted", "success");
     } catch (deleteError) {
       setError(deleteError.message);
+      showToast(deleteError.message, "error");
     }
   }
 
