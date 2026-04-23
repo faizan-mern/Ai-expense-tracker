@@ -1,15 +1,15 @@
 {
   "name": "frontend",
   "version": "1.0.0",
-  "description": "The React frontend has not been scaffolded yet.",
-  "main": "index.js",
+  "description": "Frontend for the AI Expense Tracker hiring task",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
     "@vitejs/plugin-react": "^6.0.1",
     "react": "^19.2.5",

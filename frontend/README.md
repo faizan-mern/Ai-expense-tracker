@@ -1,13 +1,18 @@
-# Frontend Placeholder
+# Frontend
 
-The React frontend has not been scaffolded yet.
+This is the React frontend for the AI Expense Tracker hiring task.
 
-This folder exists so the planned project structure is visible early.
+## Run
 
-The frontend phase will later include:
-- login and register screens
-- dashboard
-- expenses page
-- budget page
-- alerts page
-- AI assistant page
+```powershell
+cd E:\Cyberify\ai-expense-tracker\frontend
+copy .env.example .env
+npm run dev
+```
+
+By default, Vite proxies `/api/*` requests to `http://localhost:5000`.
+If you want to point the frontend to another backend URL, set:
+
+```env
+VITE_API_BASE_URL=http://localhost:5000
+```
