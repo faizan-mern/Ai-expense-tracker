@@ -22,8 +22,9 @@ function normalizeEmail(email) {
 
 async function register(req, res) {
   const { fullName, email, password } = req.body;
+  const normalizedFullName = String(fullName || "").trim();
 
-  if (!fullName || !email || !password) {
+  if (!normalizedFullName || !email || !password) {
     return res.status(400).json({
       success: false,
       message: "Full name, email, and password are required",
@@ -40,26 +41,22 @@ async function register(req, res) {
   const normalizedEmail = normalizeEmail(email);
 
   try {
-    const existingUserResult = await pool.query(
-      "SELECT id FROM users WHERE email = $1",
-      [normalizedEmail]
-    );
-
-    if (existingUserResult.rows.length > 0) {
-      return res.status(409).json({
-        success: false,
-        message: "An account with this email already exists",
-      });
-    }
-
     const passwordHash = await bcrypt.hash(password, 10);
 
     const insertUserResult = await pool.query(
       `INSERT INTO users (full_name, email, password_hash)
        VALUES ($1, $2, $3)
+       ON CONFLICT (email) DO NOTHING
        RETURNING id, full_name, email, created_at`,
-      [fullName.trim(), normalizedEmail, passwordHash]
+      [normalizedFullName, normalizedEmail, passwordHash]
     );
+
+    if (insertUserResult.rows.length === 0) {
+      return res.status(409).json({
+        success: false,
+        message: "An account with this email already exists",
+      });
+    }
 
     const user = insertUserResult.rows[0];
     const token = createToken(user);
@@ -76,6 +73,13 @@ async function register(req, res) {
       },
     });
   } catch (error) {
+    if (error.code === "23505") {
+      return res.status(409).json({
+        success: false,
+        message: "An account with this email already exists",
+      });
+    }
+
     return res.status(500).json({
       success: false,
       message: "Failed to register user",

@@ -6,13 +6,20 @@ import {
   fetchExpenses,
   updateExpense,
 } from "../api/expenseApi";
+import { formatCurrency, formatDateLabel } from "../utils/formatters";
 
-const initialExpenseForm = {
-  amount: "",
-  categoryId: "",
-  expenseDate: "",
-  note: "",
-};
+function getTodayDateValue() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function createInitialExpenseForm() {
+  return {
+    amount: "",
+    categoryId: "",
+    expenseDate: getTodayDateValue(),
+    note: "",
+  };
+}
 
 const initialCategoryForm = {
   name: "",
@@ -24,18 +31,10 @@ const initialFilters = {
   endDate: "",
 };
 
-function formatCurrency(value) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  }).format(Number(value || 0));
-}
-
 export default function ExpensesPage() {
   const [categories, setCategories] = useState([]);
   const [expenses, setExpenses] = useState([]);
-  const [expenseForm, setExpenseForm] = useState(initialExpenseForm);
+  const [expenseForm, setExpenseForm] = useState(createInitialExpenseForm);
   const [categoryForm, setCategoryForm] = useState(initialCategoryForm);
   const [filters, setFilters] = useState(initialFilters);
   const [editingId, setEditingId] = useState(null);
@@ -85,7 +84,7 @@ export default function ExpensesPage() {
       amount: Number(expenseForm.amount),
       categoryId: Number(expenseForm.categoryId),
       expenseDate: expenseForm.expenseDate,
-      note: expenseForm.note,
+      note: expenseForm.note.trim(),
     };
 
     try {
@@ -95,7 +94,7 @@ export default function ExpensesPage() {
         await createExpense(payload);
       }
 
-      setExpenseForm(initialExpenseForm);
+      setExpenseForm(createInitialExpenseForm());
       setEditingId(null);
       await loadExpenses();
     } catch (submitError) {
@@ -112,7 +111,11 @@ export default function ExpensesPage() {
         name: categoryForm.name,
       });
 
-      setCategories((current) => [...current, response.category]);
+      setCategories((current) =>
+        [...current, response.category].sort((left, right) =>
+          left.name.localeCompare(right.name)
+        )
+      );
       setCategoryForm(initialCategoryForm);
     } catch (submitError) {
       setError(submitError.message);
@@ -145,7 +148,7 @@ export default function ExpensesPage() {
 
   function handleCancelEdit() {
     setEditingId(null);
-    setExpenseForm(initialExpenseForm);
+    setExpenseForm(createInitialExpenseForm());
   }
 
   async function handleDelete(expenseId) {
@@ -159,37 +162,78 @@ export default function ExpensesPage() {
     }
   }
 
+  const totalFilteredSpend = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
+  const customCategories = categories.filter((category) => !category.isDefault).length;
+
   return (
     <section className="page">
       <header className="page-header">
         <div>
           <p className="eyebrow">Expenses</p>
-          <h2>Capture spending, shape categories, and keep the ledger easy to review.</h2>
+          <h2>Capture every spend with less friction.</h2>
+          <p className="page-copy">
+            Add transactions, keep categories tidy, and review your ledger without losing context.
+          </p>
         </div>
       </header>
 
       {error ? <p className="form-error">{error}</p> : null}
 
-      <div className="content-grid">
-        <section className="panel">
+      <div className="metric-grid">
+        <article className="metric-card">
+          <p className="eyebrow">Filtered spend</p>
+          <strong>{formatCurrency(totalFilteredSpend)}</strong>
+          <span>Across the entries shown below</span>
+        </article>
+        <article className="metric-card">
+          <p className="eyebrow">Visible entries</p>
+          <strong>{expenses.length}</strong>
+          <span>Expense records in the current view</span>
+        </article>
+        <article className="metric-card">
+          <p className="eyebrow">Categories</p>
+          <strong>{categories.length}</strong>
+          <span>{customCategories} custom categories created by you</span>
+        </article>
+      </div>
+
+      <div className="workspace-grid">
+        <section className="panel panel--soft">
           <div className="panel-header">
-            <h3>{editingId ? "Edit expense" : "Add expense"}</h3>
+            <div>
+              <p className="eyebrow">{editingId ? "Editing" : "New expense"}</p>
+              <h3>{editingId ? "Update expense" : "Add expense"}</h3>
+            </div>
           </div>
 
           <form className="stack-form" onSubmit={handleExpenseSubmit}>
-            <label>
-              Amount
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={expenseForm.amount}
-                onChange={(event) =>
-                  setExpenseForm((current) => ({ ...current, amount: event.target.value }))
-                }
-                required
-              />
-            </label>
+            <div className="field-grid">
+              <label>
+                Amount
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={expenseForm.amount}
+                  onChange={(event) =>
+                    setExpenseForm((current) => ({ ...current, amount: event.target.value }))
+                  }
+                  required
+                />
+              </label>
+
+              <label>
+                Date
+                <input
+                  type="date"
+                  value={expenseForm.expenseDate}
+                  onChange={(event) =>
+                    setExpenseForm((current) => ({ ...current, expenseDate: event.target.value }))
+                  }
+                  required
+                />
+              </label>
+            </div>
 
             <label>
               Category
@@ -207,18 +251,6 @@ export default function ExpensesPage() {
                   </option>
                 ))}
               </select>
-            </label>
-
-            <label>
-              Date
-              <input
-                type="date"
-                value={expenseForm.expenseDate}
-                onChange={(event) =>
-                  setExpenseForm((current) => ({ ...current, expenseDate: event.target.value }))
-                }
-                required
-              />
             </label>
 
             <label>
@@ -248,7 +280,10 @@ export default function ExpensesPage() {
 
         <section className="panel">
           <div className="panel-header">
-            <h3>Create custom category</h3>
+            <div>
+              <p className="eyebrow">Categories</p>
+              <h3>Create custom category</h3>
+            </div>
           </div>
 
           <form className="stack-form" onSubmit={handleCategorySubmit}>
@@ -273,10 +308,13 @@ export default function ExpensesPage() {
 
       <section className="panel">
         <div className="panel-header">
-          <h3>Filter and review</h3>
+          <div>
+            <p className="eyebrow">Filters</p>
+            <h3>Review the ledger</h3>
+          </div>
         </div>
 
-        <form className="filters-grid" onSubmit={handleApplyFilters}>
+        <form className="field-grid field-grid--filters" onSubmit={handleApplyFilters}>
           <label>
             Category
             <select
@@ -326,14 +364,17 @@ export default function ExpensesPage() {
 
       <section className="panel">
         <div className="panel-header">
-          <h3>Expense history</h3>
+          <div>
+            <p className="eyebrow">History</p>
+            <h3>Expense history</h3>
+          </div>
           <span>{expenses.length} entries</span>
         </div>
 
         {isLoading ? (
-          <p>Loading expenses...</p>
+          <p className="empty-state">Loading expenses...</p>
         ) : expenses.length === 0 ? (
-          <p>No expenses found for the current selection.</p>
+          <p className="empty-state">No expenses found for the current selection.</p>
         ) : (
           <div className="table-wrap">
             <table>
@@ -349,7 +390,7 @@ export default function ExpensesPage() {
               <tbody>
                 {expenses.map((expense) => (
                   <tr key={expense.id}>
-                    <td>{expense.expenseDate}</td>
+                    <td>{formatDateLabel(expense.expenseDate)}</td>
                     <td>{expense.categoryName}</td>
                     <td>{formatCurrency(expense.amount)}</td>
                     <td>{expense.note || "-"}</td>

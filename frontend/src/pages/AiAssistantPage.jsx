@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { parseExpenseWithAi } from "../api/aiApi";
+import { formatCurrency, formatDateLabel } from "../utils/formatters";
 
-function formatCurrency(value) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  }).format(Number(value || 0));
-}
+const samplePrompts = [
+  "I spent 2400 on groceries today",
+  "Paid 18000 rent on the first of this month",
+  "Spent 650 on transport yesterday",
+];
 
 export default function AiAssistantPage() {
   const [text, setText] = useState("");
@@ -37,26 +36,44 @@ export default function AiAssistantPage() {
       <header className="page-header">
         <div>
           <p className="eyebrow">AI Assistant</p>
-          <h2>Turn natural language into a saved expense without leaving the app.</h2>
+          <h2>Turn plain language into a saved expense.</h2>
+          <p className="page-copy">
+            Describe the amount, category, and time naturally. The backend will parse and save it for you.
+          </p>
         </div>
       </header>
 
-      <div className="content-grid">
-        <section className="panel">
+      <div className="workspace-grid">
+        <section className="panel panel--soft">
           <div className="panel-header">
-            <h3>Describe an expense</h3>
+            <div>
+              <p className="eyebrow">Prompt</p>
+              <h3>Describe an expense</h3>
+            </div>
           </div>
           <form className="stack-form" onSubmit={handleSubmit}>
             <label>
               Example
               <textarea
-                rows="5"
+                rows="6"
                 value={text}
                 onChange={(event) => setText(event.target.value)}
                 placeholder="I spent 500 on food today"
                 required
               />
             </label>
+            <div className="sample-prompt-row">
+              {samplePrompts.map((prompt) => (
+                <button
+                  key={prompt}
+                  type="button"
+                  className="chip-button"
+                  onClick={() => setText(prompt)}
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
             {error ? <p className="form-error">{error}</p> : null}
             <button type="submit" className="primary-button" disabled={isSubmitting}>
               {isSubmitting ? "Parsing..." : "Create expense with AI"}
@@ -66,33 +83,41 @@ export default function AiAssistantPage() {
 
         <section className="panel">
           <div className="panel-header">
-            <h3>Result</h3>
+            <div>
+              <p className="eyebrow">Result</p>
+              <h3>Saved expense preview</h3>
+            </div>
           </div>
           {!result ? (
-            <p>Submit a sentence and the saved expense details will appear here.</p>
+            <p className="empty-state">
+              Submit a sentence and the structured result will appear here.
+            </p>
           ) : (
-            <div className="result-stack">
+            <div className="stack-group">
               <div>
                 <p className="eyebrow">Parsed expense</p>
                 <pre>{JSON.stringify(result.parsedExpense, null, 2)}</pre>
               </div>
-              <div>
-                <p className="eyebrow">Saved expense</p>
-                <ul className="compact-list plain">
-                  <li>
+              <ul className="data-list">
+                <li>
+                  <div>
                     <strong>Category</strong>
                     <span>{result.expense.categoryName}</span>
-                  </li>
-                  <li>
+                  </div>
+                </li>
+                <li>
+                  <div>
                     <strong>Amount</strong>
                     <span>{formatCurrency(result.expense.amount)}</span>
-                  </li>
-                  <li>
+                  </div>
+                </li>
+                <li>
+                  <div>
                     <strong>Date</strong>
-                    <span>{result.expense.expenseDate}</span>
-                  </li>
-                </ul>
-              </div>
+                    <span>{formatDateLabel(result.expense.expenseDate)}</span>
+                  </div>
+                </li>
+              </ul>
             </div>
           )}
         </section>

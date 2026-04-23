@@ -2,11 +2,32 @@ import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const navItems = [
-  { to: "/", label: "Dashboard", end: true },
-  { to: "/expenses", label: "Expenses" },
-  { to: "/budgets", label: "Budgets" },
-  { to: "/alerts", label: "Alerts" },
-  { to: "/ai", label: "AI Assistant" },
+  {
+    to: "/",
+    label: "Dashboard",
+    description: "Month view, summaries, and budget health",
+    end: true,
+  },
+  {
+    to: "/expenses",
+    label: "Expenses",
+    description: "Capture, filter, and correct spending records",
+  },
+  {
+    to: "/budgets",
+    label: "Budgets",
+    description: "Plan by month and category with live usage",
+  },
+  {
+    to: "/alerts",
+    label: "Alerts",
+    description: "Review near-limit and unusual-spend signals",
+  },
+  {
+    to: "/ai",
+    label: "AI Assistant",
+    description: "Turn plain language into saved expenses",
+  },
 ];
 
 export default function AppLayout() {
@@ -17,7 +38,10 @@ export default function AppLayout() {
       <aside className="sidebar">
         <div className="brand-block">
           <p className="eyebrow">AI Expense Tracker</p>
-          <h1>Control every rupee with a calm, smart workflow.</h1>
+          <h1>Control every rupee with one calm workspace.</h1>
+          <p className="sidebar-copy">
+            Track spending, set monthly guardrails, and respond before your budget drifts.
+          </p>
         </div>
 
         <nav className="nav-list">
@@ -28,7 +52,8 @@ export default function AppLayout() {
               end={item.end}
               className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
             >
-              {item.label}
+              <strong>{item.label}</strong>
+              <span>{item.description}</span>
             </NavLink>
           ))}
         </nav>

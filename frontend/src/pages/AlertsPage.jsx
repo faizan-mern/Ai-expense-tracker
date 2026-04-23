@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchAlerts, markAlertAsRead } from "../api/alertApi";
+import { formatDateTimeLabel } from "../utils/formatters";
 
 export default function AlertsPage() {
   const [alerts, setAlerts] = useState([]);
@@ -47,12 +48,17 @@ export default function AlertsPage() {
     }
   }
 
+  const unreadCount = alerts.filter((alert) => !alert.isRead).length;
+
   return (
     <section className="page">
       <header className="page-header">
         <div>
           <p className="eyebrow">Alerts</p>
-          <h2>Review the warnings and anomalies your backend is already generating.</h2>
+          <h2>Review the signals that need attention.</h2>
+          <p className="page-copy">
+            Keep unread warnings visible and clear them once you’ve checked the spending pattern behind them.
+          </p>
         </div>
         <label className="inline-toggle">
           <input
@@ -66,11 +72,24 @@ export default function AlertsPage() {
 
       {error ? <p className="form-error">{error}</p> : null}
 
+      <div className="metric-grid">
+        <article className="metric-card">
+          <p className="eyebrow">Visible alerts</p>
+          <strong>{alerts.length}</strong>
+          <span>Matching the current filter</span>
+        </article>
+        <article className="metric-card">
+          <p className="eyebrow">Unread</p>
+          <strong>{unreadCount}</strong>
+          <span>Still waiting for review</span>
+        </article>
+      </div>
+
       <section className="panel">
         {isLoading ? (
-          <p>Loading alerts...</p>
+          <p className="empty-state">Loading alerts...</p>
         ) : alerts.length === 0 ? (
-          <p>No alerts for the current filter.</p>
+          <p className="empty-state">No alerts for the current filter.</p>
         ) : (
           <ul className="alert-list">
             {alerts.map((alert) => (
@@ -78,7 +97,7 @@ export default function AlertsPage() {
                 <div>
                   <p className="eyebrow">{alert.alertType.replace(/_/g, " ")}</p>
                   <strong>{alert.message}</strong>
-                  <small>{new Date(alert.createdAt).toLocaleString()}</small>
+                  <small>{formatDateTimeLabel(alert.createdAt)}</small>
                 </div>
                 {!alert.isRead ? (
                   <button

@@ -15,11 +15,20 @@ export default function RegisterPage() {
 
   async function handleSubmit(event) {
     event.preventDefault();
+
+    if (isSubmitting) {
+      return;
+    }
+
     setError("");
     setIsSubmitting(true);
 
     try {
-      await register(form);
+      await register({
+        fullName: form.fullName.trim(),
+        email: form.email.trim(),
+        password: form.password,
+      });
       navigate("/", { replace: true });
     } catch (submitError) {
       setError(submitError.message);
@@ -44,6 +53,7 @@ export default function RegisterPage() {
             <input
               type="text"
               value={form.fullName}
+              autoComplete="name"
               onChange={(event) =>
                 setForm((current) => ({ ...current, fullName: event.target.value }))
               }
@@ -56,6 +66,7 @@ export default function RegisterPage() {
             <input
               type="email"
               value={form.email}
+              autoComplete="email"
               onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
               required
             />
@@ -66,6 +77,7 @@ export default function RegisterPage() {
             <input
               type="password"
               value={form.password}
+              autoComplete="new-password"
               onChange={(event) =>
                 setForm((current) => ({ ...current, password: event.target.value }))
               }

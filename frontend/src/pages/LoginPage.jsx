@@ -12,11 +12,19 @@ export default function LoginPage() {
 
   async function handleSubmit(event) {
     event.preventDefault();
+
+    if (isSubmitting) {
+      return;
+    }
+
     setError("");
     setIsSubmitting(true);
 
     try {
-      await login(form);
+      await login({
+        email: form.email.trim(),
+        password: form.password,
+      });
       navigate(location.state?.from?.pathname || "/", { replace: true });
     } catch (submitError) {
       setError(submitError.message);
@@ -41,6 +49,7 @@ export default function LoginPage() {
             <input
               type="email"
               value={form.email}
+              autoComplete="email"
               onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
               required
             />
@@ -51,6 +60,7 @@ export default function LoginPage() {
             <input
               type="password"
               value={form.password}
+              autoComplete="current-password"
               onChange={(event) =>
                 setForm((current) => ({ ...current, password: event.target.value }))
               }

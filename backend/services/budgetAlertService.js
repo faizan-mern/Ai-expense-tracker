@@ -12,11 +12,19 @@ function getNextMonthStart(monthStart) {
 
 function getMonthLabel(monthStart) {
   const date = new Date(`${monthStart}T00:00:00Z`);
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat("en-PK", {
     month: "long",
     year: "numeric",
     timeZone: "UTC",
   }).format(date);
+}
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat("en-PK", {
+    style: "currency",
+    currency: "PKR",
+    maximumFractionDigits: 2,
+  }).format(Number(value || 0));
 }
 
 async function createAlertIfMissing({
@@ -116,7 +124,7 @@ async function evaluateBudgetThresholds(budgetRow, triggeringExpenseId = null) {
       expenseId: triggeringExpenseId,
       budgetId: Number(budgetRow.id),
       alertType: "budget_exceeded",
-      message: `You have exceeded your ${subject}. Spent: ${spent}, Budget: ${budgetAmount}.`,
+      message: `You have exceeded your ${subject}. Spent ${formatCurrency(spent)} against a budget of ${formatCurrency(budgetAmount)}.`,
       monthStart: budgetRow.budget_month,
     });
     return;
@@ -128,7 +136,7 @@ async function evaluateBudgetThresholds(budgetRow, triggeringExpenseId = null) {
       expenseId: triggeringExpenseId,
       budgetId: Number(budgetRow.id),
       alertType: "near_limit",
-      message: `You are close to your ${subject}. Spent: ${spent}, Budget: ${budgetAmount}.`,
+      message: `You are close to your ${subject}. Spent ${formatCurrency(spent)} out of ${formatCurrency(budgetAmount)}.`,
       monthStart: budgetRow.budget_month,
     });
   }
