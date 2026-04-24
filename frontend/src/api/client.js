@@ -1,5 +1,10 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 const TOKEN_KEY = "expense_tracker_token";
+let navigateTo = null;
+
+export function setNavigator(fn) {
+  navigateTo = typeof fn === "function" ? fn : null;
+}
 
 export function getStoredToken() {
   return localStorage.getItem(TOKEN_KEY);
@@ -13,7 +18,7 @@ export function clearStoredToken() {
   localStorage.removeItem(TOKEN_KEY);
 }
 
-async function parseResponse(response) {
+async function parseResponse(response, path) {
   const isJson = response.headers.get("content-type")?.includes("application/json");
   let payload = null;
 
@@ -23,9 +28,11 @@ async function parseResponse(response) {
 
   if (!response.ok) {
     // Token expired or invalid — clear it and force re-login
-    if (response.status === 401) {
+    if (response.status === 401 && !String(path || "").includes("/auth/login")) {
       clearStoredToken();
-      window.location.href = "/login";
+      if (navigateTo) {
+        navigateTo("/login", { replace: true });
+      }
       return;
     }
 
@@ -70,5 +77,5 @@ export async function apiRequest(path, options = {}, attempt = 0) {
     return apiRequest(path, options, 1);
   }
 
-  return parseResponse(response);
+  return parseResponse(response, path);
 }

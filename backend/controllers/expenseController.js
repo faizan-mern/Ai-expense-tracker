@@ -1,4 +1,5 @@
 const pool = require("../db");
+const { evaluateAlertsForExpense } = require("../services/budgetAlertService");
 const {
   createExpenseForUser,
   findExpenseById,
@@ -170,6 +171,20 @@ async function updateExpense(req, res) {
   }
 
   try {
+    const existingExpense = await findExpenseById(expenseId, userId);
+
+    if (!existingExpense) {
+      return res.status(404).json({
+        success: false,
+        message: "Expense not found",
+      });
+    }
+
+    const hasThresholdRelevantChange =
+      Number(existingExpense.amount) !== parsedAmount ||
+      Number(existingExpense.categoryId) !== Number(categoryId) ||
+      existingExpense.expenseDate !== expenseDate;
+
     const updatedExpense = await updateExpenseForUser({
       expenseId,
       userId,
@@ -177,7 +192,12 @@ async function updateExpense(req, res) {
       categoryId,
       expenseDate,
       note,
+      existingExpense,
     });
+
+    if (hasThresholdRelevantChange) {
+      await evaluateAlertsForExpense(updatedExpense);
+    }
 
     return res.status(200).json({
       success: true,
@@ -224,6 +244,11 @@ async function deleteExpense(req, res) {
       "DELETE FROM expenses WHERE id = $1 AND user_id = $2",
       [expenseId, userId]
     );
+    try {
+      await evaluateAlertsForExpense(existingExpense);
+    } catch (alertError) {
+      // Alert re-evaluation should not block a successful delete response.
+    }
 
     return res.status(200).json({
       success: true,

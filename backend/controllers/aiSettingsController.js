@@ -66,7 +66,11 @@ async function saveAiSettings(req, res) {
   try {
     let actualApiKey = normalizedApiKey;
 
-    if (normalizedApiKey === null || normalizedApiKey === MASKED_API_KEY) {
+    if (
+      normalizedApiKey === null ||
+      normalizedApiKey === "" ||
+      normalizedApiKey === MASKED_API_KEY
+    ) {
       actualApiKey = null;
     }
 

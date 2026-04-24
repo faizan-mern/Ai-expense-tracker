@@ -1,6 +1,22 @@
 const express = require("express");
 const cors = require("cors");
+const rateLimit = require("express-rate-limit");
 require("./config/env");
+
+const ENV_PLACEHOLDERS = {
+  DATABASE_URL: "postgresql://postgres:your_password@localhost:5432/ai_expense_tracker",
+  JWT_SECRET: "replace_with_a_long_random_secret",
+};
+
+for (const [key, placeholder] of Object.entries(ENV_PLACEHOLDERS)) {
+  const value = process.env[key];
+  if (!value || value.trim() === "" || value === placeholder) {
+    console.error(
+      `[FATAL] Invalid ${key}. Set a real value in backend/.env before starting the server.`
+    );
+    process.exit(1);
+  }
+}
 
 const authRoutes = require("./routes/authRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
@@ -9,9 +25,17 @@ const budgetRoutes = require("./routes/budgetRoutes");
 const alertRoutes = require("./routes/alertRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 
-const authMiddleware = require("./middleware/authMiddleware");
-
 const app = express();
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many auth attempts. Please try again in 15 minutes.",
+  },
+});
 
 app.use(
   cors({
@@ -33,12 +57,21 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/register", authLimiter);
 app.use("/api/auth", authRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/budgets", budgetRoutes);
 app.use("/api/alerts", alertRoutes);
 app.use("/api/ai", aiRoutes);
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).json({
+    success: false,
+    message: "Internal server error",
+  });
+});
 
 const PORT = process.env.PORT || 5000;
 

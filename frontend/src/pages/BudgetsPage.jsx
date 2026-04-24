@@ -5,6 +5,7 @@ import { deleteBudget, fetchBudgets, saveBudget } from "../api/budgetApi";
 import { fetchExpenses } from "../api/expenseApi";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle, MetricCard } from "../components/ui/Card";
+import { ConfirmModal } from "../components/ui/ConfirmModal";
 import { useToast } from "../components/ui/Toast";
 import {
   MONTH_OPTIONS,
@@ -34,6 +35,7 @@ export default function BudgetsPage() {
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthValue());
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [confirmingDelete, setConfirmingDelete] = useState(null);
 
   const { year: selectedYear, month: selectedMonthNumber } = splitBudgetMonth(selectedMonth);
 
@@ -98,13 +100,21 @@ export default function BudgetsPage() {
     } catch (err) { setError(err.message); showToast(err.message, "error"); }
   }
 
-  async function handleDelete(budgetId) {
-    if (!window.confirm("Delete this budget?")) return;
+  function handleDeleteRequest(budget) {
+    setConfirmingDelete(budget);
+  }
+
+  async function handleDeleteConfirm() {
+    if (!confirmingDelete) {
+      return;
+    }
+
     setError("");
     try {
-      await deleteBudget(budgetId);
+      await deleteBudget(confirmingDelete.id);
       await refreshBudgetWorkspace();
       showToast("Budget deleted", "success");
+      setConfirmingDelete(null);
     } catch (err) { setError(err.message); showToast(err.message, "error"); }
   }
 
@@ -253,7 +263,12 @@ export default function BudgetsPage() {
                       ? `${formatCurrency(remaining)} remaining`
                       : `${formatCurrency(Math.abs(remaining))} over budget`}
                   </span>
-                  <Button type="button" variant="danger" size="sm" onClick={() => handleDelete(overallBudget.id)}>
+                  <Button
+                    type="button"
+                    variant="danger"
+                    size="sm"
+                    onClick={() => handleDeleteRequest(overallBudget)}
+                  >
                     Delete
                   </Button>
                 </div>
@@ -306,7 +321,12 @@ export default function BudgetsPage() {
                           ? `${formatCurrency(budget.spent - budget.amount)} over budget`
                           : `${formatCurrency(budget.amount - budget.spent)} remaining`}
                       </span>
-                      <Button type="button" variant="danger" size="sm" onClick={() => handleDelete(budget.id)}>
+                      <Button
+                        type="button"
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleDeleteRequest(budget)}
+                      >
                         Delete
                       </Button>
                     </div>
@@ -317,6 +337,18 @@ export default function BudgetsPage() {
           )}
         </CardContent>
       </Card>
+      <ConfirmModal
+        isOpen={Boolean(confirmingDelete)}
+        title="Delete budget?"
+        description={
+          confirmingDelete
+            ? `This will permanently delete the ${confirmingDelete.categoryName || "overall"} budget of ${formatCurrency(confirmingDelete.amount)} for ${formatMonthLabel(confirmingDelete.budgetMonth)}.`
+            : ""
+        }
+        confirmLabel="Delete budget"
+        onCancel={() => setConfirmingDelete(null)}
+        onConfirm={handleDeleteConfirm}
+      />
     </section>
   );
 }

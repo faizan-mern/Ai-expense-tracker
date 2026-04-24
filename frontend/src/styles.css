@@ -695,6 +695,47 @@ pre {
   font-size: 0.9rem;
 }
 
+.confirm-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: rgba(10, 18, 15, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 120;
+}
+
+.confirm-modal {
+  width: min(100%, 480px);
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  box-shadow: var(--shadow);
+}
+
+.confirm-modal h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+}
+
+.confirm-modal p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
 .ledger-toolbar {
   position: sticky;
   top: 1rem;

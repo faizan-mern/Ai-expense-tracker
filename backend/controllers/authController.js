@@ -31,14 +31,36 @@ async function register(req, res) {
     });
   }
 
+  const normalizedEmail = normalizeEmail(String(email));
+  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail);
+
+  if (!isValidEmail) {
+    return res.status(400).json({
+      success: false,
+      message: "Email must be a valid email address",
+    });
+  }
+
+  if (normalizedFullName.length > 100) {
+    return res.status(400).json({
+      success: false,
+      message: "Full name must be 100 characters or fewer",
+    });
+  }
+
+  if (password.length > 72) {
+    return res.status(400).json({
+      success: false,
+      message: "Password must be 72 characters or fewer",
+    });
+  }
+
   if (password.length < 6) {
     return res.status(400).json({
       success: false,
       message: "Password must be at least 6 characters long",
     });
   }
-
-  const normalizedEmail = normalizeEmail(email);
 
   try {
     const passwordHash = await bcrypt.hash(password, 10);

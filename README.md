@@ -28,17 +28,17 @@ What is left for optional polish:
 
 Read these files in order:
 
-1. [`docs/PROJECT_CONTEXT.md`](E:/Cyberify/ai-expense-tracker/docs/PROJECT_CONTEXT.md)
-2. [`docs/IMPLEMENTATION_PLAN.md`](E:/Cyberify/ai-expense-tracker/docs/IMPLEMENTATION_PLAN.md)
-3. [`docs/DATABASE_SETUP.md`](E:/Cyberify/ai-expense-tracker/docs/DATABASE_SETUP.md)
-4. [`docs/SCHEMA_EXPLAINED.md`](E:/Cyberify/ai-expense-tracker/docs/SCHEMA_EXPLAINED.md)
-5. [`docs/EXPENSE_SYSTEM_EXPLAINED.md`](E:/Cyberify/ai-expense-tracker/docs/EXPENSE_SYSTEM_EXPLAINED.md)
-6. [`docs/AI_HANDOFF.md`](E:/Cyberify/ai-expense-tracker/docs/AI_HANDOFF.md)
+1. [`docs/PROJECT_CONTEXT.md`](./docs/PROJECT_CONTEXT.md)
+2. [`docs/IMPLEMENTATION_PLAN.md`](./docs/IMPLEMENTATION_PLAN.md)
+3. [`docs/DATABASE_SETUP.md`](./docs/DATABASE_SETUP.md)
+4. [`docs/SCHEMA_EXPLAINED.md`](./docs/SCHEMA_EXPLAINED.md)
+5. [`docs/EXPENSE_SYSTEM_EXPLAINED.md`](./docs/EXPENSE_SYSTEM_EXPLAINED.md)
+6. [`docs/AI_HANDOFF.md`](./docs/AI_HANDOFF.md)
 
 ## Backend Quick Start
 
 ```powershell
-cd E:\Cyberify\ai-expense-tracker\backend
+cd ./backend
 copy .env.example .env
 npm install
 npm.cmd run db:check

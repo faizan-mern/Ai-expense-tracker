@@ -75,10 +75,11 @@ async function updateExpenseForUser({
   categoryId,
   expenseDate,
   note,
+  existingExpense,
 }) {
-  const existingExpense = await findExpenseById(expenseId, userId);
+  const currentExpense = existingExpense || (await findExpenseById(expenseId, userId));
 
-  if (!existingExpense) {
+  if (!currentExpense) {
     const error = new Error("Expense not found");
     error.statusCode = 404;
     throw error;
@@ -104,8 +105,6 @@ async function updateExpenseForUser({
   );
 
   const updatedExpense = await findExpenseById(expenseId, userId);
-
-  await evaluateAlertsForExpense(updatedExpense);
 
   return updatedExpense;
 }

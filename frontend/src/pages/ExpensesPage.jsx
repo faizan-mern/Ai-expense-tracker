@@ -10,6 +10,7 @@ import {
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle, MetricCard } from "../components/ui/Card";
+import { ConfirmModal } from "../components/ui/ConfirmModal";
 import { Pagination } from "../components/ui/Pagination";
 import { useToast } from "../components/ui/Toast";
 import { formatCurrency, formatDateLabel } from "../utils/formatters";
@@ -44,6 +45,7 @@ export default function ExpensesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilterBar, setShowFilterBar] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(null);
 
   async function loadExpenses(activeFilters = filters) {
     const response = await fetchExpenses(activeFilters);
@@ -118,13 +120,21 @@ export default function ExpensesPage() {
     catch (err) { setError(err.message); } finally { setIsLoading(false); }
   }
 
-  async function handleDelete(id) {
-    if (!window.confirm("Delete this expense? This cannot be undone.")) return;
+  function handleDeleteRequest(expense) {
+    setConfirmingDelete(expense);
+  }
+
+  async function handleDeleteConfirm() {
+    if (!confirmingDelete) {
+      return;
+    }
+
     setError("");
     try {
-      await deleteExpense(id);
+      await deleteExpense(confirmingDelete.id);
       await loadExpenses();
       showToast("Expense deleted", "success");
+      setConfirmingDelete(null);
     } catch (err) { setError(err.message); showToast(err.message, "error"); }
   }
 
@@ -416,7 +426,14 @@ export default function ExpensesPage() {
                         <td>
                           <div className="table-actions">
                             <Button type="button" variant="outline" size="sm" onClick={() => handleEdit(expense)}>Edit</Button>
-                            <Button type="button" variant="danger" size="sm" onClick={() => handleDelete(expense.id)}>Delete</Button>
+                            <Button
+                              type="button"
+                              variant="danger"
+                              size="sm"
+                              onClick={() => handleDeleteRequest(expense)}
+                            >
+                              Delete
+                            </Button>
                           </div>
                         </td>
                       </tr>
@@ -429,6 +446,18 @@ export default function ExpensesPage() {
           )}
         </CardContent>
       </Card>
+      <ConfirmModal
+        isOpen={Boolean(confirmingDelete)}
+        title="Delete expense?"
+        description={
+          confirmingDelete
+            ? `This will permanently delete ${formatCurrency(confirmingDelete.amount)} in ${confirmingDelete.categoryName} from ${formatDateLabel(confirmingDelete.expenseDate)}.`
+            : ""
+        }
+        confirmLabel="Delete expense"
+        onCancel={() => setConfirmingDelete(null)}
+        onConfirm={handleDeleteConfirm}
+      />
     </section>
   );
 }

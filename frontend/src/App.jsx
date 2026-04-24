@@ -1,5 +1,6 @@
-import { lazy, Suspense } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { lazy, Suspense, useEffect } from "react";
+import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { setNavigator } from "./api/client";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
@@ -23,6 +24,16 @@ function RouteFallback() {
 }
 
 export default function App() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    setNavigator(navigate);
+
+    return () => {
+      setNavigator(null);
+    };
+  }, [navigate]);
+
   return (
     <Suspense fallback={<RouteFallback />}>
       <Routes>
