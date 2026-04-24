@@ -11,6 +11,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card"
 import { useToast } from "../components/ui/Toast";
 
 const DEFAULT_MODEL = "openai/gpt-4o-mini";
+
+function formatModelLabel(modelId) {
+  if (!modelId) return modelId;
+  const slashIdx = modelId.indexOf("/");
+  if (slashIdx === -1) return modelId;
+  const provider = modelId.slice(0, slashIdx);
+  const model = modelId.slice(slashIdx + 1);
+  const providerLabel = provider.charAt(0).toUpperCase() + provider.slice(1);
+  return `${model}  —  ${providerLabel}`;
+}
 const initialSettings = {
   apiKey: "",
   modelName: DEFAULT_MODEL,
@@ -115,7 +125,7 @@ export default function AiSettingsPage() {
             place.
           </p>
         </div>
-        <Badge variant="default">{settings.modelName || DEFAULT_MODEL}</Badge>
+        <Badge variant="default">{formatModelLabel(settings.modelName || DEFAULT_MODEL)}</Badge>
       </header>
 
       <Card soft>
@@ -207,7 +217,7 @@ export default function AiSettingsPage() {
                     {(models.length > 0 ? models : [settings.modelName || DEFAULT_MODEL]).map(
                       (modelName) => (
                         <option key={modelName} value={modelName}>
-                          {modelName}
+                          {formatModelLabel(modelName)}
                         </option>
                       )
                     )}

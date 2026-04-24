@@ -1,4 +1,13 @@
 import { AlertCircle, ArrowRight, Loader2, Settings2 } from "lucide-react";
+
+function formatModelLabel(modelId) {
+  if (!modelId) return modelId;
+  const slashIdx = modelId.indexOf("/");
+  if (slashIdx === -1) return modelId;
+  const provider = modelId.slice(0, slashIdx);
+  const model = modelId.slice(slashIdx + 1);
+  return `${model}  (${provider.charAt(0).toUpperCase() + provider.slice(1)})`;
+}
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchAiSettings, parseExpenseWithAi } from "../api/aiApi";
@@ -147,7 +156,9 @@ export default function AiAssistantPage() {
                   <div className="kv-grid">
                     <div>
                       <span className="kv-label">Model</span>
-                      <strong>{config.modelName || config.model || "Default backend model"}</strong>
+                      <strong>
+                        {formatModelLabel(config.modelName || config.model) || "Default backend model"}
+                      </strong>
                     </div>
                     <div>
                       <span className="kv-label">API key</span>
@@ -166,46 +177,40 @@ export default function AiAssistantPage() {
           {/* Result */}
           <Card>
             <CardHeader>
-              <CardTitle eyebrow="Result">Saved expense preview</CardTitle>
+              <CardTitle eyebrow="Result">Expense created</CardTitle>
             </CardHeader>
             <CardContent>
               {!result ? (
                 <p className="empty-state">
-                  Submit a sentence and the parsed expense will appear here.
+                  Submit a sentence and the saved expense will appear here.
                 </p>
               ) : (
-                <div className="stack-group">
-                  <div>
-                    <p className="eyebrow">Parsed output</p>
-                    <pre>{JSON.stringify(result.parsedExpense, null, 2)}</pre>
-                  </div>
-                  <ul className="data-list">
-                    <li>
-                      <div>
-                        <strong>Category</strong>
-                        <span>{result.expense.categoryName}</span>
-                      </div>
-                    </li>
-                    <li>
-                      <div>
-                        <strong>Amount</strong>
-                        <span>{formatCurrency(result.expense.amount)}</span>
-                      </div>
-                    </li>
-                    <li>
-                      <div>
-                        <strong>Date</strong>
-                        <span>{formatDateLabel(result.expense.expenseDate)}</span>
-                      </div>
-                    </li>
-                    <li>
-                      <div>
-                        <strong>Note</strong>
-                        <span>{result.expense.note || "No note saved"}</span>
-                      </div>
-                    </li>
-                  </ul>
-                </div>
+                <ul className="data-list">
+                  <li>
+                    <div>
+                      <span className="kv-label">Amount</span>
+                      <strong>{formatCurrency(result.expense.amount)}</strong>
+                    </div>
+                  </li>
+                  <li>
+                    <div>
+                      <span className="kv-label">Category</span>
+                      <strong>{result.expense.categoryName}</strong>
+                    </div>
+                  </li>
+                  <li>
+                    <div>
+                      <span className="kv-label">Date</span>
+                      <strong>{formatDateLabel(result.expense.expenseDate)}</strong>
+                    </div>
+                  </li>
+                  <li>
+                    <div>
+                      <span className="kv-label">Note</span>
+                      <strong>{result.expense.note || "—"}</strong>
+                    </div>
+                  </li>
+                </ul>
               )}
             </CardContent>
           </Card>

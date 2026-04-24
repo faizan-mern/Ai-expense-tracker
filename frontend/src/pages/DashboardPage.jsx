@@ -173,21 +173,51 @@ export default function DashboardPage() {
           ) : spendingChartData.length === 0 ? (
             <p className="empty-state">No spending data for this month yet.</p>
           ) : (
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={spendingChartData}>
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart
+                data={spendingChartData}
+                barCategoryGap="35%"
+                margin={{ top: 4, right: 4, left: 0, bottom: 0 }}
+              >
                 <CartesianGrid
                   strokeDasharray="3 3"
                   stroke="rgba(0,0,0,0.06)"
+                  vertical={false}
                 />
-                <XAxis dataKey="dayLabel" tick={{ fontSize: 12 }} />
-                <YAxis hide />
+                <XAxis
+                  dataKey="dayLabel"
+                  tick={{ fontSize: 11, fill: "#63736b" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: "#63736b" }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v) =>
+                    v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)
+                  }
+                  width={36}
+                />
                 <Tooltip
-                  formatter={(value) => formatCurrency(value)}
+                  formatter={(value) => [formatCurrency(value), "Spent"]}
                   labelFormatter={(_, payload) =>
                     payload?.[0]?.payload?.dateLabel || ""
                   }
+                  contentStyle={{
+                    borderRadius: "12px",
+                    border: "1px solid rgba(20,33,28,0.1)",
+                    boxShadow: "0 4px 16px rgba(15,33,28,0.08)",
+                    fontSize: "0.85rem",
+                  }}
+                  cursor={{ fill: "rgba(23,123,90,0.06)" }}
                 />
-                <Bar dataKey="amount" fill="#177b5a" radius={[8, 8, 0, 0]} />
+                <Bar
+                  dataKey="amount"
+                  fill="#177b5a"
+                  radius={[6, 6, 0, 0]}
+                  maxBarSize={48}
+                />
               </BarChart>
             </ResponsiveContainer>
           )}

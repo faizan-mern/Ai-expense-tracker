@@ -43,7 +43,7 @@ async function parseResponse(response) {
   return payload;
 }
 
-export async function apiRequest(path, options = {}) {
+export async function apiRequest(path, options = {}, attempt = 0) {
   const token = getStoredToken();
   const headers = new Headers(options.headers || {});
 
@@ -59,6 +59,16 @@ export async function apiRequest(path, options = {}) {
     ...options,
     headers,
   });
+
+  // Server cold-start (Render free tier): first non-JSON 5xx — wait and retry once silently
+  if (
+    attempt === 0 &&
+    response.status >= 500 &&
+    !response.headers.get("content-type")?.includes("application/json")
+  ) {
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+    return apiRequest(path, options, 1);
+  }
 
   return parseResponse(response);
 }

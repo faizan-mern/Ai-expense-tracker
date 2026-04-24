@@ -91,6 +91,11 @@ textarea {
   background: var(--surface-strong);
   color: var(--text);
   transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+  /* prevent long option text from blowing out layout */
+  max-width: 100%;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 input:focus,
@@ -702,13 +707,23 @@ tbody tr:nth-child(even) {
 .budget-card__meta {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   gap: var(--space-3);
+  flex-wrap: wrap;
 }
 
 .budget-card__header > div,
 .budget-card__meta > div {
   display: grid;
   gap: 0.2rem;
+  min-width: 0;
+}
+
+.budget-card strong,
+.budget-card span {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  min-width: 0;
 }
 
 .progress-track {
