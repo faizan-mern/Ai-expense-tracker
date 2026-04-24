@@ -1,3 +1,4 @@
+import { AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createCategory, fetchCategories } from "../api/categoryApi";
 import {
@@ -10,6 +11,7 @@ import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle, MetricCard } from "../components/ui/Card";
 import { Pagination } from "../components/ui/Pagination";
+import { useToast } from "../components/ui/Toast";
 import { formatCurrency, formatDateLabel } from "../utils/formatters";
 
 const ITEMS_PER_PAGE = 10;
@@ -31,6 +33,7 @@ const initialCategoryForm = { name: "" };
 const initialFilters = { categoryId: "", startDate: "", endDate: "" };
 
 export default function ExpensesPage() {
+  const { showToast } = useToast();
   const [categories, setCategories] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [expenseForm, setExpenseForm] = useState(createInitialExpenseForm);
@@ -82,7 +85,8 @@ export default function ExpensesPage() {
       setExpenseForm(createInitialExpenseForm());
       setEditingId(null);
       await loadExpenses();
-    } catch (err) { setError(err.message); }
+      showToast(editingId ? "Expense updated" : "Expense saved", "success");
+    } catch (err) { setError(err.message); showToast(err.message, "error"); }
   }
 
   async function handleCategorySubmit(e) {
@@ -92,7 +96,8 @@ export default function ExpensesPage() {
       const res = await createCategory({ name: categoryForm.name });
       setCategories((cur) => [...cur, res.category].sort((a, b) => a.name.localeCompare(b.name)));
       setCategoryForm(initialCategoryForm);
-    } catch (err) { setError(err.message); }
+      showToast("Category created", "success");
+    } catch (err) { setError(err.message); showToast(err.message, "error"); }
   }
 
   async function handleApplyFilters(e) {
@@ -112,7 +117,11 @@ export default function ExpensesPage() {
   async function handleDelete(id) {
     if (!window.confirm("Delete this expense? This cannot be undone.")) return;
     setError("");
-    try { await deleteExpense(id); await loadExpenses(); } catch (err) { setError(err.message); }
+    try {
+      await deleteExpense(id);
+      await loadExpenses();
+      showToast("Expense deleted", "success");
+    } catch (err) { setError(err.message); showToast(err.message, "error"); }
   }
 
   function handleEdit(expense) {
@@ -149,9 +158,14 @@ export default function ExpensesPage() {
         <Badge variant="default">{expenses.length} visible</Badge>
       </header>
 
-      {error ? <p className="form-error">{error}</p> : null}
+      {error ? (
+        <div className="form-error">
+          <AlertCircle size={18} />
+          <p>{error}</p>
+        </div>
+      ) : null}
 
-      <div className="metric-grid" style={{ gridTemplateColumns: "repeat(3,minmax(0,1fr))" }}>
+      <div className="metric-grid metric-grid--3col">
         <MetricCard eyebrow="Filtered spend" value={formatCurrency(totalFilteredSpend)} description="Across the entries shown below" />
         <MetricCard eyebrow="Visible entries" value={expenses.length} description="Records in the current view" />
         <MetricCard eyebrow="Categories" value={categories.length} description={`${customCategories} custom categories`} />

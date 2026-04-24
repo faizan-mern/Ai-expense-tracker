@@ -1,13 +1,20 @@
-import { AlertTriangle, TrendingDown, Zap } from "lucide-react";
+import { AlertCircle, AlertTriangle, CheckCheck, TrendingDown, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
-import { fetchAlerts, markAlertAsRead } from "../api/alertApi";
+import { fetchAlerts, markAlertAsRead, markAllAlertsAsRead } from "../api/alertApi";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle, MetricCard } from "../components/ui/Card";
 import { Pagination } from "../components/ui/Pagination";
+import { useToast } from "../components/ui/Toast";
 import { formatDateTimeLabel } from "../utils/formatters";
 
 const ITEMS_PER_PAGE = 10;
+
+const ALERT_TYPE_LABELS = {
+  budget_exceeded: "Budget Exceeded",
+  near_limit: "Near Limit",
+  unusual_expense: "Unusual Expense",
+};
 
 function getAlertTypeMeta(alertType) {
   if (alertType === "budget_exceeded") return { Icon: TrendingDown, color: "var(--danger)" };
@@ -16,10 +23,13 @@ function getAlertTypeMeta(alertType) {
 }
 
 export default function AlertsPage() {
+  const { showToast } = useToast();
   const [alerts, setAlerts] = useState([]);
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isMarkingAll, setIsMarkingAll] = useState(false);
+  const [markingId, setMarkingId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
@@ -45,12 +55,40 @@ export default function AlertsPage() {
   }, [unreadOnly]);
 
   async function handleMarkAsRead(alertId) {
+    setMarkingId(alertId);
     setError("");
     try {
       await markAlertAsRead(alertId);
-      const response = await fetchAlerts(unreadOnly);
-      setAlerts(response.alerts);
-    } catch (e) { setError(e.message); }
+      // Optimistic update: flip isRead locally, avoids a full re-fetch
+      setAlerts((current) =>
+        unreadOnly
+          ? current.filter((a) => a.id !== alertId)
+          : current.map((a) => (a.id === alertId ? { ...a, isRead: true } : a))
+      );
+      showToast("Alert marked as read", "success");
+    } catch (e) {
+      setError(e.message);
+      showToast(e.message, "error");
+    } finally {
+      setMarkingId(null);
+    }
+  }
+
+  async function handleMarkAllAsRead() {
+    setIsMarkingAll(true);
+    setError("");
+    try {
+      await markAllAlertsAsRead();
+      setAlerts((current) =>
+        unreadOnly ? [] : current.map((a) => ({ ...a, isRead: true }))
+      );
+      showToast("All alerts marked as read", "success");
+    } catch (e) {
+      setError(e.message);
+      showToast(e.message, "error");
+    } finally {
+      setIsMarkingAll(false);
+    }
   }
 
   const unreadCount = alerts.filter((a) => !a.isRead).length;
@@ -80,9 +118,14 @@ export default function AlertsPage() {
         </label>
       </header>
 
-      {error ? <p className="form-error">{error}</p> : null}
+      {error ? (
+        <div className="form-error">
+          <AlertCircle size={18} />
+          <p>{error}</p>
+        </div>
+      ) : null}
 
-      <div className="metric-grid" style={{ gridTemplateColumns: "repeat(2,minmax(0,1fr))" }}>
+      <div className="metric-grid metric-grid--2col">
         <MetricCard eyebrow="Visible alerts" value={alerts.length} description="Matching the current filter" />
         <MetricCard eyebrow="Unread" value={unreadCount} description="Still waiting for review" />
       </div>
@@ -90,9 +133,23 @@ export default function AlertsPage() {
       <Card>
         <CardHeader>
           <CardTitle eyebrow="Queue">Alert activity</CardTitle>
-          <Badge variant={unreadOnly ? "accent" : "muted"}>
-            {unreadOnly ? "Unread filter on" : "All alerts"}
-          </Badge>
+          <div className="button-row">
+            {unreadCount > 0 && (
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={handleMarkAllAsRead}
+                disabled={isMarkingAll}
+              >
+                <CheckCheck size={14} />
+                {isMarkingAll ? "Clearing..." : "Mark all as read"}
+              </Button>
+            )}
+            <Badge variant={unreadOnly ? "accent" : "muted"}>
+              {unreadOnly ? "Unread filter on" : "All alerts"}
+            </Badge>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -109,7 +166,9 @@ export default function AlertsPage() {
                       <div>
                         <div className="alert-eyebrow">
                           <Icon size={15} color={color} />
-                          <p className="eyebrow">{alert.alertType.replace(/_/g, " ")}</p>
+                          <p className="eyebrow">
+                            {ALERT_TYPE_LABELS[alert.alertType] ?? alert.alertType.replace(/_/g, " ")}
+                          </p>
                         </div>
                         <strong className="text-sm">{alert.message}</strong>
                         <small className="text-[#63736b]">
@@ -122,8 +181,9 @@ export default function AlertsPage() {
                           variant="secondary"
                           size="sm"
                           onClick={() => handleMarkAsRead(alert.id)}
+                          disabled={markingId === alert.id}
                         >
-                          Mark as read
+                          {markingId === alert.id ? "Marking..." : "Mark as read"}
                         </Button>
                       ) : (
                         <Badge variant="muted">Read</Badge>

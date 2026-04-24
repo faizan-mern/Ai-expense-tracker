@@ -42,7 +42,6 @@ async function getAlerts(req, res) {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch alerts",
-      error: error.message,
     });
   }
 }
@@ -83,7 +82,31 @@ async function markAlertAsRead(req, res) {
     return res.status(500).json({
       success: false,
       message: "Failed to update alert",
-      error: error.message,
+    });
+  }
+}
+
+async function markAllAlertsAsRead(req, res) {
+  const userId = req.user.userId;
+
+  try {
+    const result = await pool.query(
+      `UPDATE alerts
+       SET is_read = TRUE
+       WHERE user_id = $1 AND is_read = FALSE
+       RETURNING id`,
+      [userId]
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "All alerts marked as read",
+      updatedCount: result.rows.length,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to mark all alerts as read",
     });
   }
 }
@@ -91,4 +114,5 @@ async function markAlertAsRead(req, res) {
 module.exports = {
   getAlerts,
   markAlertAsRead,
+  markAllAlertsAsRead,
 };

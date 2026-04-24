@@ -62,7 +62,6 @@ async function getAiSettings(req, res) {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch AI settings",
-      error: error.message,
     });
   }
 }
@@ -114,7 +113,6 @@ async function saveAiSettings(req, res) {
     return res.status(500).json({
       success: false,
       message: "Failed to save AI settings",
-      error: error.message,
     });
   }
 }
@@ -164,7 +162,6 @@ async function getAvailableModels(req, res) {
     return res.status(502).json({
       success: false,
       message: "Failed to fetch available models",
-      error: error.message,
     });
   }
 }

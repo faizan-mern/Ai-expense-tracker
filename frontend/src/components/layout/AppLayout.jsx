@@ -52,8 +52,8 @@ export default function AppLayout() {
           Workspace
         </p>
 
-        {/* Nav links */}
-        <nav className="flex flex-col gap-0.5 flex-1">
+        {/* Nav links — vertical on desktop, horizontal scroll on tablet */}
+        <nav className="flex flex-col gap-0.5 flex-1 max-[1180px]:flex-row max-[1180px]:overflow-x-auto max-[1180px]:flex-none max-[1180px]:pb-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -63,10 +63,10 @@ export default function AppLayout() {
                 end={item.end}
                 className={({ isActive }) =>
                   [
-                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 border-l-2",
+                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 border-l-2 shrink-0 max-[1180px]:border-l-0 max-[1180px]:border-b-2",
                     isActive
-                      ? "bg-white/10 text-white border-l-[#46b28b]"
-                      : "text-white/65 border-l-transparent hover:bg-white/6 hover:text-white/90",
+                      ? "bg-white/10 text-white border-l-[#46b28b] max-[1180px]:border-b-[#46b28b]"
+                      : "text-white/65 border-l-transparent border-b-transparent hover:bg-white/6 hover:text-white/90",
                   ].join(" ")
                 }
               >
@@ -74,7 +74,7 @@ export default function AppLayout() {
                   <>
                     <span
                       className={[
-                        "flex items-center justify-center w-7 h-7 rounded-lg transition-colors",
+                        "flex items-center justify-center w-7 h-7 rounded-lg transition-colors shrink-0",
                         isActive
                           ? "bg-[#177b5a]/50 text-white"
                           : "text-white/60",
@@ -91,7 +91,7 @@ export default function AppLayout() {
         </nav>
 
         {/* Footer: user + logout */}
-        <div className="mt-auto pt-4 border-t border-white/10">
+        <div className="mt-auto pt-4 border-t border-white/10 max-[1180px]:mt-0">
           <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-white/6 transition-colors group">
             {/* Avatar */}
             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#177b5a]/50 text-white text-xs font-bold shrink-0">

@@ -10,3 +10,9 @@ export function markAlertAsRead(alertId) {
     method: "PATCH",
   });
 }
+
+export function markAllAlertsAsRead() {
+  return apiRequest("/api/alerts/read-all", {
+    method: "PATCH",
+  });
+}

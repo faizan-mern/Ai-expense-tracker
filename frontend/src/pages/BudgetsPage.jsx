@@ -1,3 +1,4 @@
+import { AlertCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { fetchCategories } from "../api/categoryApi";
 import { deleteBudget, fetchBudgets, saveBudget } from "../api/budgetApi";
@@ -17,6 +18,12 @@ import {
 } from "../utils/formatters";
 
 const initialForm = { amount: "", categoryId: "" };
+
+function getBudgetBarColor(pct) {
+  if (pct >= 100) return "var(--danger)";
+  if (pct >= 80) return "var(--warning)";
+  return "var(--accent)";
+}
 
 export default function BudgetsPage() {
   const { showToast } = useToast();
@@ -128,7 +135,12 @@ export default function BudgetsPage() {
         </div>
       </header>
 
-      {error ? <p className="form-error">{error}</p> : null}
+      {error ? (
+        <div className="form-error">
+          <AlertCircle size={18} />
+          <p>{error}</p>
+        </div>
+      ) : null}
 
       {/* Month selector */}
       <Card soft>
@@ -226,7 +238,10 @@ export default function BudgetsPage() {
                   <strong>{overallBudget.percentUsed}%</strong>
                 </div>
                 <div className="progress-track">
-                  <span style={{ width: `${Math.min(overallBudget.percentUsed, 100)}%` }} />
+                  <span style={{
+                    width: `${Math.min(overallBudget.percentUsed, 100)}%`,
+                    background: getBudgetBarColor(overallBudget.percentUsed),
+                  }} />
                 </div>
                 <div className="budget-card__meta">
                   <span>Spent {formatCurrency(totalSpent)}</span>
@@ -276,7 +291,10 @@ export default function BudgetsPage() {
                       <strong>{budget.percentUsed}%</strong>
                     </div>
                     <div className="progress-track">
-                      <span style={{ width: `${Math.min(budget.percentUsed, 100)}%` }} />
+                      <span style={{
+                        width: `${Math.min(budget.percentUsed, 100)}%`,
+                        background: getBudgetBarColor(budget.percentUsed),
+                      }} />
                     </div>
                     <div className="budget-card__meta">
                       <span>Spent {formatCurrency(budget.spent)}</span>

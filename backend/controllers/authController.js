@@ -83,7 +83,6 @@ async function register(req, res) {
     return res.status(500).json({
       success: false,
       message: "Failed to register user",
-      error: error.message,
     });
   }
 }
@@ -142,7 +141,6 @@ async function login(req, res) {
     return res.status(500).json({
       success: false,
       message: "Failed to log in",
-      error: error.message,
     });
   }
 }
@@ -178,7 +176,6 @@ async function getCurrentUser(req, res) {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch user profile",
-      error: error.message,
     });
   }
 }

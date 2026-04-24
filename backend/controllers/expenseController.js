@@ -62,7 +62,6 @@ async function createExpense(req, res) {
     return res.status(500).json({
       success: false,
       message: "Failed to create expense",
-      error: error.message,
     });
   }
 }
@@ -131,7 +130,6 @@ async function getExpenses(req, res) {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch expenses",
-      error: error.message,
     });
   }
 }
@@ -197,7 +195,6 @@ async function updateExpense(req, res) {
     return res.status(500).json({
       success: false,
       message: "Failed to update expense",
-      error: error.message,
     });
   }
 }
@@ -236,7 +233,6 @@ async function deleteExpense(req, res) {
     return res.status(500).json({
       success: false,
       message: "Failed to delete expense",
-      error: error.message,
     });
   }
 }

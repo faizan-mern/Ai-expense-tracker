@@ -22,6 +22,13 @@ async function parseResponse(response) {
   }
 
   if (!response.ok) {
+    // Token expired or invalid — clear it and force re-login
+    if (response.status === 401) {
+      clearStoredToken();
+      window.location.href = "/login";
+      return;
+    }
+
     if (!isJson) {
       await response.text();
       throw new Error(

@@ -10,11 +10,15 @@ const alertRoutes = require("./routes/alertRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 
 const authMiddleware = require("./middleware/authMiddleware");
-const { getAvailableModels } = require("./controllers/aiSettingsController");
 
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 app.get("/", (req, res) => {
@@ -35,8 +39,6 @@ app.use("/api/expenses", expenseRoutes);
 app.use("/api/budgets", budgetRoutes);
 app.use("/api/alerts", alertRoutes);
 app.use("/api/ai", aiRoutes);
-
-app.get(["/v1/models", "/api/v1/models"], authMiddleware, getAvailableModels);
 
 const PORT = process.env.PORT || 5000;
 

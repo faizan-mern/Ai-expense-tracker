@@ -151,7 +151,6 @@ async function upsertBudget(req, res) {
     return res.status(500).json({
       success: false,
       message: "Failed to save budget",
-      error: error.message,
     });
   }
 }
@@ -211,7 +210,6 @@ async function getBudgets(req, res) {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch budgets",
-      error: error.message,
     });
   }
 }
@@ -248,7 +246,6 @@ async function deleteBudget(req, res) {
     return res.status(500).json({
       success: false,
       message: "Failed to delete budget",
-      error: error.message,
     });
   }
 }

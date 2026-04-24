@@ -1,3 +1,4 @@
+import { AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   Bar,
@@ -20,6 +21,12 @@ import {
   getCurrentMonthValue,
   getMonthDateRange,
 } from "../utils/formatters";
+
+function getBudgetBarColor(pct) {
+  if (pct >= 100) return "var(--danger)";
+  if (pct >= 80) return "var(--warning)";
+  return "var(--accent)";
+}
 
 export default function DashboardPage() {
   const currentMonth = getCurrentMonthValue();
@@ -117,7 +124,12 @@ export default function DashboardPage() {
         <Badge variant="default">{formatMonthLabel(currentMonth)}</Badge>
       </header>
 
-      {state.error ? <p className="form-error">{state.error}</p> : null}
+      {state.error ? (
+        <div className="form-error">
+          <AlertCircle size={18} />
+          <p>{state.error}</p>
+        </div>
+      ) : null}
 
       {/* Metric cards */}
       <div className="metric-grid">
@@ -252,6 +264,7 @@ export default function DashboardPage() {
                         <span
                           style={{
                             width: `${Math.min(budget.percentUsed, 100)}%`,
+                            background: getBudgetBarColor(budget.percentUsed),
                           }}
                         />
                       </div>

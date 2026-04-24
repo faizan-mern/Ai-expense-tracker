@@ -1,10 +1,10 @@
-import { RefreshCw, Save } from "lucide-react";
+import { AlertCircle, RefreshCw, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   fetchAiSettings,
   fetchAvailableModels,
   saveAiSettings,
-} from "../api/aiSettingsApi";
+} from "../api/aiApi";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card";
@@ -142,7 +142,12 @@ export default function AiSettingsPage() {
         </CardContent>
       </Card>
 
-      {error ? <p className="form-error">{error}</p> : null}
+      {error ? (
+        <div className="form-error">
+          <AlertCircle size={18} />
+          <p>{error}</p>
+        </div>
+      ) : null}
 
       {isLoading ? (
         <section className="panel">

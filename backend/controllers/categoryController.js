@@ -35,7 +35,6 @@ async function getCategories(req, res) {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch categories",
-      error: error.message,
     });
   }
 }
@@ -93,7 +92,6 @@ async function createCategory(req, res) {
     return res.status(500).json({
       success: false,
       message: "Failed to create category",
-      error: error.message,
     });
   }
 }

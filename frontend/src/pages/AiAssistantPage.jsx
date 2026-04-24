@@ -1,7 +1,10 @@
-import { ArrowRight, Settings2 } from "lucide-react";
+import { AlertCircle, ArrowRight, Loader2, Settings2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchAiSettings, parseExpenseWithAi } from "../api/aiApi";
+import { Button } from "../components/ui/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card";
+import { useToast } from "../components/ui/Toast";
 import { formatCurrency, formatDateLabel } from "../utils/formatters";
 
 const samplePrompts = [
@@ -11,6 +14,7 @@ const samplePrompts = [
 ];
 
 export default function AiAssistantPage() {
+  const { showToast } = useToast();
   const [text, setText] = useState("");
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
@@ -24,22 +28,14 @@ export default function AiAssistantPage() {
     async function loadSettings() {
       try {
         const response = await fetchAiSettings();
-
-        if (!isCancelled) {
-          setConfig(response.settings || null);
-        }
+        if (!isCancelled) setConfig(response.settings || null);
       } catch (loadError) {
-        if (!isCancelled) {
-          setConfigError(loadError.message);
-        }
+        if (!isCancelled) setConfigError(loadError.message);
       }
     }
 
     loadSettings();
-
-    return () => {
-      isCancelled = true;
-    };
+    return () => { isCancelled = true; };
   }, []);
 
   async function handleSubmit(event) {
@@ -52,6 +48,7 @@ export default function AiAssistantPage() {
       const response = await parseExpenseWithAi({ text });
       setResult(response);
       setText("");
+      showToast("Expense created via AI", "success");
     } catch (submitError) {
       setError(submitError.message);
     } finally {
@@ -70,138 +67,149 @@ export default function AiAssistantPage() {
             the expense using your current AI settings.
           </p>
         </div>
-        <Link to="/settings" className="secondary-button secondary-button--inline">
-          <span className="btn-content">
-            <Settings2 size={16} />
-            <span>Open AI settings</span>
-          </span>
+        <Link to="/settings">
+          <Button variant="secondary" type="button">
+            <Settings2 size={15} />
+            Open AI settings
+          </Button>
         </Link>
       </header>
 
+      {/* Two-column: prompt on left, config+result stacked on right */}
       <div className="workspace-grid workspace-grid--assistant">
-        <section className="panel panel--soft">
-          <div className="panel-header">
-            <div>
-              <p className="eyebrow">Prompt</p>
-              <h3>Describe an expense</h3>
-            </div>
-          </div>
+        {/* Left: prompt form */}
+        <Card soft>
+          <CardHeader>
+            <CardTitle eyebrow="Prompt">Describe an expense</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form className="stack-form" onSubmit={handleSubmit}>
+              <label>
+                Expense description
+                <textarea
+                  rows="6"
+                  value={text}
+                  onChange={(event) => setText(event.target.value)}
+                  placeholder="I spent 500 on food today"
+                  required
+                />
+              </label>
 
-          <form className="stack-form" onSubmit={handleSubmit}>
-            <label>
-              Expense description
-              <textarea
-                rows="6"
-                value={text}
-                onChange={(event) => setText(event.target.value)}
-                placeholder="I spent 500 on food today"
-                required
-              />
-            </label>
+              <div className="sample-prompt-row">
+                {samplePrompts.map((prompt) => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    className="chip-button"
+                    onClick={() => setText(prompt)}
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
 
-            <div className="sample-prompt-row">
-              {samplePrompts.map((prompt) => (
-                <button
-                  key={prompt}
-                  type="button"
-                  className="chip-button"
-                  onClick={() => setText(prompt)}
-                >
-                  {prompt}
-                </button>
-              ))}
-            </div>
-
-            {error ? <p className="form-error">{error}</p> : null}
-
-            <button type="submit" className="primary-button" disabled={isSubmitting}>
-              <span className="btn-content">
-                <span>{isSubmitting ? "Parsing with AI..." : "Create expense with AI"}</span>
-                {!isSubmitting ? <ArrowRight size={16} /> : null}
-              </span>
-            </button>
-          </form>
-        </section>
-
-        <section className="panel">
-          <div className="panel-header">
-            <div>
-              <p className="eyebrow">Current setup</p>
-              <h3>Active AI configuration</h3>
-            </div>
-          </div>
-
-          {configError ? (
-            <p className="form-error">{configError}</p>
-          ) : !config ? (
-            <div className="loading-pulse">Loading AI settings...</div>
-          ) : (
-            <div className="stack-group stack-group--compact">
-              <div className="kv-grid">
-                <div>
-                  <span className="kv-label">Model</span>
-                  <strong>{config.modelName || config.model || "Default backend model"}</strong>
+              {error ? (
+                <div className="form-error">
+                  <AlertCircle size={18} />
+                  <p>{error}</p>
                 </div>
-                <div>
-                  <span className="kv-label">API key</span>
-                  <strong>{config.apiKey ? "Configured" : "Using backend fallback or none"}</strong>
+              ) : null}
+
+              <Button type="submit" variant="primary" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <Loader2 size={15} className="spin" />
+                ) : (
+                  <ArrowRight size={15} />
+                )}
+                {isSubmitting ? "Parsing with AI..." : "Create expense with AI"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Right column: config + result stacked */}
+        <div className="stack-group">
+          {/* Active AI configuration */}
+          <Card>
+            <CardHeader>
+              <CardTitle eyebrow="Current setup">Active AI configuration</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {configError ? (
+                <div className="form-error">
+                  <AlertCircle size={18} />
+                  <p>{configError}</p>
                 </div>
-              </div>
-              <div className="prompt-preview">
-                <span className="kv-label">System prompt</span>
-                <p>{config.systemPrompt || "No custom instructions saved."}</p>
-              </div>
-            </div>
-          )}
-        </section>
+              ) : !config ? (
+                <div className="loading-pulse">Loading AI settings...</div>
+              ) : (
+                <div className="stack-group stack-group--compact">
+                  <div className="kv-grid">
+                    <div>
+                      <span className="kv-label">Model</span>
+                      <strong>{config.modelName || config.model || "Default backend model"}</strong>
+                    </div>
+                    <div>
+                      <span className="kv-label">API key</span>
+                      <strong>{config.apiKey ? "Configured" : "Using backend fallback or none"}</strong>
+                    </div>
+                  </div>
+                  <div className="prompt-preview">
+                    <span className="kv-label">System prompt</span>
+                    <p>{config.systemPrompt || "No custom instructions saved."}</p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-        <section className="panel">
-          <div className="panel-header">
-            <div>
-              <p className="eyebrow">Result</p>
-              <h3>Saved expense preview</h3>
-            </div>
-          </div>
-
-          {!result ? (
-            <p className="empty-state">
-              Submit a sentence and the parsed expense plus saved record will appear here.
-            </p>
-          ) : (
-            <div className="stack-group">
-              <div>
-                <p className="eyebrow">Parsed expense</p>
-                <pre>{JSON.stringify(result.parsedExpense, null, 2)}</pre>
-              </div>
-              <ul className="data-list">
-                <li>
+          {/* Result */}
+          <Card>
+            <CardHeader>
+              <CardTitle eyebrow="Result">Saved expense preview</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!result ? (
+                <p className="empty-state">
+                  Submit a sentence and the parsed expense will appear here.
+                </p>
+              ) : (
+                <div className="stack-group">
                   <div>
-                    <strong>Category</strong>
-                    <span>{result.expense.categoryName}</span>
+                    <p className="eyebrow">Parsed output</p>
+                    <pre>{JSON.stringify(result.parsedExpense, null, 2)}</pre>
                   </div>
-                </li>
-                <li>
-                  <div>
-                    <strong>Amount</strong>
-                    <span>{formatCurrency(result.expense.amount)}</span>
-                  </div>
-                </li>
-                <li>
-                  <div>
-                    <strong>Date</strong>
-                    <span>{formatDateLabel(result.expense.expenseDate)}</span>
-                  </div>
-                </li>
-                <li>
-                  <div>
-                    <strong>Note</strong>
-                    <span>{result.expense.note || "No note saved"}</span>
-                  </div>
-                </li>
-              </ul>
-            </div>
-          )}
-        </section>
+                  <ul className="data-list">
+                    <li>
+                      <div>
+                        <strong>Category</strong>
+                        <span>{result.expense.categoryName}</span>
+                      </div>
+                    </li>
+                    <li>
+                      <div>
+                        <strong>Amount</strong>
+                        <span>{formatCurrency(result.expense.amount)}</span>
+                      </div>
+                    </li>
+                    <li>
+                      <div>
+                        <strong>Date</strong>
+                        <span>{formatDateLabel(result.expense.expenseDate)}</span>
+                      </div>
+                    </li>
+                    <li>
+                      <div>
+                        <strong>Note</strong>
+                        <span>{result.expense.note || "No note saved"}</span>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </section>
   );
