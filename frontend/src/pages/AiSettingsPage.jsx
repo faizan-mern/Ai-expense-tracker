@@ -11,6 +11,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card"
 import { useToast } from "../components/ui/Toast";
 
 const DEFAULT_MODEL = "openai/gpt-4o-mini";
+const FALLBACK_MODEL_OPTIONS = [
+  { id: "openai/gpt-4o-mini", name: "GPT-4o Mini (Paid)" },
+  { id: "anthropic/claude-3.5-haiku", name: "Claude 3.5 Haiku (Paid)" },
+  { id: "inclusionai/ling-2.6-1t:free", name: "Ling 2.6 1T (Free)" },
+  { id: "inclusionai/ling-2.6-flash:free", name: "Ling 2.6 Flash (Free)" },
+  { id: "nvidia/nemotron-3-super-120b-a12b:free", name: "Nemotron Super 120B (Free)" },
+  { id: "nvidia/nemotron-3-nano-30b-a3b:free", name: "Nemotron Nano 30B (Free)" },
+  { id: "nvidia/nemotron-nano-9b-v2:free", name: "Nemotron Nano 9B (Free)" },
+  { id: "nvidia/nemotron-nano-12b-v2-vl:free", name: "Nemotron Nano 12B (Free)" },
+];
 
 function formatModelLabel(modelId) {
   if (!modelId) return modelId;
@@ -20,6 +30,39 @@ function formatModelLabel(modelId) {
   const model = modelId.slice(slashIdx + 1);
   const providerLabel = provider.charAt(0).toUpperCase() + provider.slice(1);
   return `${model} - ${providerLabel}`;
+}
+
+function getModelId(modelOption) {
+  if (modelOption && typeof modelOption === "object") {
+    return String(modelOption.id || "");
+  }
+
+  return String(modelOption || "");
+}
+
+function getModelLabel(modelOption) {
+  if (modelOption && typeof modelOption === "object") {
+    return modelOption.name || modelOption.id || "";
+  }
+
+  return String(modelOption || "");
+}
+
+function dedupeModelOptions(modelOptions) {
+  const seen = new Set();
+  const deduped = [];
+
+  for (const option of modelOptions) {
+    const id = getModelId(option).trim();
+    if (!id || seen.has(id)) {
+      continue;
+    }
+
+    seen.add(id);
+    deduped.push(option);
+  }
+
+  return deduped;
 }
 
 const initialSettings = {
@@ -32,12 +75,11 @@ const initialSettings = {
 export default function AiSettingsPage() {
   const { showToast } = useToast();
   const [settings, setSettings] = useState(initialSettings);
-  const [models, setModels] = useState([]);
-  const [modelSearch, setModelSearch] = useState("");
+  const [models, setModels] = useState(FALLBACK_MODEL_OPTIONS);
+  const [modelsSource, setModelsSource] = useState("curated");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isLoadingModels, setIsLoadingModels] = useState(false);
 
   useEffect(() => {
     let isCancelled = false;
@@ -66,7 +108,17 @@ export default function AiSettingsPage() {
           }
 
           if (modelsResult.status === "fulfilled") {
-            setModels(modelsResult.value.models || []);
+            const loadedModels =
+              Array.isArray(modelsResult.value.models) &&
+              modelsResult.value.models.length > 0
+                ? modelsResult.value.models
+                : FALLBACK_MODEL_OPTIONS;
+
+            setModels(loadedModels);
+            setModelsSource(modelsResult.value.source || "curated");
+          } else {
+            setModels(FALLBACK_MODEL_OPTIONS);
+            setModelsSource("curated");
           }
 
           setIsLoading(false);
@@ -86,22 +138,6 @@ export default function AiSettingsPage() {
       isCancelled = true;
     };
   }, [showToast]);
-
-  async function handleLoadModels() {
-    setError("");
-    setIsLoadingModels(true);
-
-    try {
-      const response = await fetchAvailableModels();
-      setModels(response.models || []);
-      showToast("Available models loaded", "success");
-    } catch (loadError) {
-      setError(loadError.message);
-      showToast(loadError.message, "error");
-    } finally {
-      setIsLoadingModels(false);
-    }
-  }
 
   async function handleSaveSettings(event) {
     event.preventDefault();
@@ -134,12 +170,13 @@ export default function AiSettingsPage() {
     }
   }
 
-  const visibleModels =
-    models.length > 0
-      ? models.filter((model) =>
-          model.toLowerCase().includes(modelSearch.toLowerCase())
-        )
-      : [settings.modelName || DEFAULT_MODEL];
+  const searchableModels = models.length > 0 ? models : FALLBACK_MODEL_OPTIONS;
+  const visibleModels = dedupeModelOptions(
+    [
+      ...searchableModels,
+      settings.modelName || DEFAULT_MODEL,
+    ]
+  );
 
   return (
     <section className="page">
@@ -213,7 +250,7 @@ export default function AiSettingsPage() {
                   />
                 </label>
                 <p className="field-note">
-                  Leave this unchanged if you want to keep the current key.
+                  Your key is used for all AI requests. Leave blank to use the app default.
                 </p>
               </div>
             </CardContent>
@@ -222,40 +259,10 @@ export default function AiSettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle eyebrow="Model">Active model</CardTitle>
-              <div className="button-row">
-                <Badge variant="muted">
-                  {models.length > 0 ? `${visibleModels.length} models` : "Saved model"}
-                </Badge>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleLoadModels}
-                  disabled={isLoadingModels}
-                >
-                  <RefreshCw size={14} className={isLoadingModels ? "spin" : ""} />
-                  {isLoadingModels ? "Loading..." : "Refresh"}
-                </Button>
-              </div>
+              <Badge variant="muted">8 models</Badge>
             </CardHeader>
             <CardContent>
               <div className="stack-form">
-                {models.length > 0 ? (
-                  <label>
-                    Search models
-                    <input
-                      type="text"
-                      value={modelSearch}
-                      onChange={(event) => setModelSearch(event.target.value)}
-                      placeholder="Filter the available list"
-                    />
-                  </label>
-                ) : (
-                  <p className="field-note">
-                    The saved model is shown below. Use refresh to retry loading
-                    the full provider list.
-                  </p>
-                )}
                 <label>
                   Model
                   <select
@@ -266,19 +273,27 @@ export default function AiSettingsPage() {
                         modelName: event.target.value,
                       }))
                     }
-                    disabled={isLoadingModels}
                   >
-                    {visibleModels.map((modelName) => (
-                      <option key={modelName} value={modelName}>
-                        {formatModelLabel(modelName)}
-                      </option>
-                    ))}
+                    {visibleModels.map((modelOption) => {
+                      const modelId = getModelId(modelOption);
+                      const modelLabel = getModelLabel(modelOption);
+
+                      return (
+                        <option key={modelId} value={modelId}>
+                          {modelLabel}
+                        </option>
+                      );
+                    })}
                   </select>
                 </label>
                 <p className="field-note">
-                  All available models are loaded on entry when the provider
-                  endpoint responds successfully.
+                  Only models that support structured output are shown.
                 </p>
+                {modelsSource === "curated" ? (
+                  <p className="field-note">
+                    Only confirmed working models are shown.
+                  </p>
+                ) : null}
               </div>
             </CardContent>
           </Card>

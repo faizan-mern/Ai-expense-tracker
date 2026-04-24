@@ -69,7 +69,7 @@ async function parseExpense(req, res) {
     return res.status(500).json({
       success: false,
       message: isCompatibilityError
-        ? "This model does not support AI parsing. Go to AI Settings and select a different model."
+        ? "This model does not support structured output required for expense parsing. Please select GPT-4o Mini, Claude 3.5 Haiku, or another supported model from AI Settings."
         : "Failed to process AI expense request",
       error: resolvedError.message || "Unknown AI error",
     });

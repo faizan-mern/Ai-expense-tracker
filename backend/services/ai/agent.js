@@ -133,7 +133,7 @@ async function parseExpenseTextWithAi({ userId, text }) {
     apiKey,
     model,
     temperature: 0,
-    maxTokens: 180,
+    maxTokens: 512,
     maxRetries: 2,
     configuration: baseURL ? { baseURL } : undefined,
   });
