@@ -1,8 +1,11 @@
+@import "tailwindcss";
+
 :root {
   color-scheme: light;
-  font-family: "Aptos", "Segoe UI Variable Text", "Segoe UI", sans-serif;
+  font-family: "Inter", "Segoe UI Variable Text", "Segoe UI", sans-serif;
   line-height: 1.5;
   font-weight: 400;
+
   --bg: #edf2ee;
   --bg-strong: #e2ebe4;
   --surface: rgba(255, 255, 255, 0.92);

@@ -6,108 +6,123 @@ import {
   PiggyBank,
   Receipt,
   Settings,
+  Wallet,
 } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const navItems = [
-  {
-    to: "/",
-    label: "Dashboard",
-    description: "Month overview and key signals",
-    icon: LayoutDashboard,
-    end: true,
-  },
-  {
-    to: "/expenses",
-    label: "Expenses",
-    description: "Create, filter, and update entries",
-    icon: Receipt,
-  },
-  {
-    to: "/budgets",
-    label: "Budgets",
-    description: "Monthly limits and live usage",
-    icon: PiggyBank,
-  },
-  {
-    to: "/alerts",
-    label: "Alerts",
-    description: "Unread warnings and activity",
-    icon: Bell,
-  },
-  {
-    to: "/ai",
-    label: "AI Assistant",
-    description: "Parse natural-language expenses",
-    icon: Bot,
-  },
-  {
-    to: "/settings",
-    label: "AI Settings",
-    description: "Keys, model, and prompt rules",
-    icon: Settings,
-  },
+  { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/expenses", label: "Expenses", icon: Receipt },
+  { to: "/budgets", label: "Budgets", icon: PiggyBank },
+  { to: "/alerts", label: "Alerts", icon: Bell },
+  { to: "/ai", label: "AI Assistant", icon: Bot },
+  { to: "/settings", label: "AI Settings", icon: Settings },
 ];
+
+function getInitials(name) {
+  if (!name) return "U";
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
 
 export default function AppLayout() {
   const { user, logout } = useAuth();
 
   return (
     <div className="app-shell">
+      {/* ── Sidebar ── */}
       <aside className="sidebar">
-        <div className="sidebar-top">
-          <div className="brand-block">
-            <p className="brand-kicker">AI Expense Tracker</p>
-            <p className="brand-name">Clear spending control for daily use.</p>
-            <p className="brand-tagline">
-              Track expenses, monitor budgets, and keep AI-assisted entries predictable.
-            </p>
+        {/* Brand */}
+        <div className="flex items-center gap-2.5 px-3 py-2 mb-2">
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#177b5a]">
+            <Wallet size={16} className="text-white" />
           </div>
-
-          <div className="sidebar-section">
-            <p className="sidebar-section-label">Workspace</p>
-            <nav className="nav-list">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-
-                return (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    end={item.end}
-                    className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
-                  >
-                    <span className="nav-icon" aria-hidden="true">
-                      <Icon size={18} />
-                    </span>
-                    <span className="nav-text">
-                      <strong>{item.label}</strong>
-                      <span>{item.description}</span>
-                    </span>
-                  </NavLink>
-                );
-              })}
-            </nav>
-          </div>
+          <span className="text-[0.95rem] font-bold text-white tracking-tight">
+            AI Expense
+          </span>
         </div>
 
-        <div className="sidebar-footer">
-          <div className="sidebar-user">
-            <p className="eyebrow">Signed in</p>
-            <strong>{user?.fullName || "User"}</strong>
-            <p>{user?.email}</p>
+        {/* Nav label */}
+        <p className="px-3 text-[0.7rem] font-extrabold tracking-[0.14em] uppercase text-white/40 mb-1">
+          Workspace
+        </p>
+
+        {/* Nav links */}
+        <nav className="flex flex-col gap-0.5 flex-1">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) =>
+                  [
+                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 border-l-2",
+                    isActive
+                      ? "bg-white/10 text-white border-l-[#46b28b]"
+                      : "text-white/65 border-l-transparent hover:bg-white/6 hover:text-white/90",
+                  ].join(" ")
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <span
+                      className={[
+                        "flex items-center justify-center w-7 h-7 rounded-lg transition-colors",
+                        isActive
+                          ? "bg-[#177b5a]/50 text-white"
+                          : "text-white/60",
+                      ].join(" ")}
+                    >
+                      <Icon size={15} />
+                    </span>
+                    <span>{item.label}</span>
+                  </>
+                )}
+              </NavLink>
+            );
+          })}
+        </nav>
+
+        {/* Footer: user + logout */}
+        <div className="mt-auto pt-4 border-t border-white/10">
+          <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-white/6 transition-colors group">
+            {/* Avatar */}
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#177b5a]/50 text-white text-xs font-bold shrink-0">
+              {getInitials(user?.fullName)}
+            </div>
+            {/* Name + email */}
+            <div className="flex-1 min-w-0">
+              <p className="m-0 text-[0.85rem] font-semibold text-white truncate leading-tight">
+                {user?.fullName || "User"}
+              </p>
+              <p className="m-0 text-[0.72rem] text-white/50 truncate leading-tight">
+                {user?.email}
+              </p>
+            </div>
+            {/* Logout */}
+            <button
+              type="button"
+              onClick={logout}
+              title="Sign out"
+              className="opacity-0 group-hover:opacity-100 flex items-center justify-center w-7 h-7 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all"
+            >
+              <LogOut size={14} />
+            </button>
           </div>
-          <button type="button" className="ghost-button ghost-button--sidebar" onClick={logout}>
-            <span className="btn-content">
-              <LogOut size={16} />
-              <span>Logout</span>
-            </span>
-          </button>
-          <span className="version-badge">v1.0.0 / Hiring Demo</span>
+          <p className="px-2 mt-2 text-[0.68rem] text-white/30">
+            v1.0.0 · Hiring Demo
+          </p>
         </div>
       </aside>
 
+      {/* ── Main workspace ── */}
       <main className="workspace">
         <div className="workspace-inner">
           <Outlet />

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { AlertCircle, Loader2, Lock, Mail, User as UserIcon } from "lucide-react";
+import { Button } from "../components/ui/Button";
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -104,12 +105,12 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <button type="submit" className="primary-button" disabled={isSubmitting}>
-            <div className="btn-content">
-              {isSubmitting ? <Loader2 className="spin" size={18} /> : null}
-              <span>{isSubmitting ? "Creating account..." : "Register"}</span>
-            </div>
-          </button>
+          <Button type="submit" variant="primary" className="w-full" disabled={isSubmitting}>
+            <span className="inline-flex items-center gap-2">
+              {isSubmitting ? <Loader2 className="spin" size={16} /> : null}
+              {isSubmitting ? "Creating account..." : "Create account"}
+            </span>
+          </Button>
         </form>
 
         <p className="auth-switch">
