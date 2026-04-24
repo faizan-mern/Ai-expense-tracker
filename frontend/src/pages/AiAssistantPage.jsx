@@ -1,7 +1,7 @@
-import { CheckCircle2 } from "lucide-react";
-import { useState } from "react";
-import { parseExpenseWithAi } from "../api/aiApi";
-import { useToast } from "../components/ui/Toast";
+import { ArrowRight, Settings2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { fetchAiSettings, parseExpenseWithAi } from "../api/aiApi";
 import { formatCurrency, formatDateLabel } from "../utils/formatters";
 
 const samplePrompts = [
@@ -11,11 +11,36 @@ const samplePrompts = [
 ];
 
 export default function AiAssistantPage() {
-  const { showToast } = useToast();
   const [text, setText] = useState("");
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [configError, setConfigError] = useState("");
+  const [config, setConfig] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function loadSettings() {
+      try {
+        const response = await fetchAiSettings();
+
+        if (!isCancelled) {
+          setConfig(response.settings || null);
+        }
+      } catch (loadError) {
+        if (!isCancelled) {
+          setConfigError(loadError.message);
+        }
+      }
+    }
+
+    loadSettings();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -27,10 +52,8 @@ export default function AiAssistantPage() {
       const response = await parseExpenseWithAi({ text });
       setResult(response);
       setText("");
-      showToast("Expense created with AI", "success");
     } catch (submitError) {
       setError(submitError.message);
-      showToast(submitError.message, "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -43,12 +66,19 @@ export default function AiAssistantPage() {
           <p className="eyebrow">AI Assistant</p>
           <h2>Turn plain language into a saved expense.</h2>
           <p className="page-copy">
-            Describe the amount, category, and time naturally. The backend will parse and save it for you.
+            Describe the amount, category, and timing naturally. The assistant parses it and saves
+            the expense using your current AI settings.
           </p>
         </div>
+        <Link to="/settings" className="secondary-button secondary-button--inline">
+          <span className="btn-content">
+            <Settings2 size={16} />
+            <span>Open AI settings</span>
+          </span>
+        </Link>
       </header>
 
-      <div className="workspace-grid">
+      <div className="workspace-grid workspace-grid--assistant">
         <section className="panel panel--soft">
           <div className="panel-header">
             <div>
@@ -56,9 +86,10 @@ export default function AiAssistantPage() {
               <h3>Describe an expense</h3>
             </div>
           </div>
+
           <form className="stack-form" onSubmit={handleSubmit}>
             <label>
-              Your expense description
+              Expense description
               <textarea
                 rows="6"
                 value={text}
@@ -67,6 +98,7 @@ export default function AiAssistantPage() {
                 required
               />
             </label>
+
             <div className="sample-prompt-row">
               {samplePrompts.map((prompt) => (
                 <button
@@ -79,56 +111,79 @@ export default function AiAssistantPage() {
                 </button>
               ))}
             </div>
+
             {error ? <p className="form-error">{error}</p> : null}
+
             <button type="submit" className="primary-button" disabled={isSubmitting}>
-              {isSubmitting ? "Parsing..." : "Create expense with AI"}
+              <span className="btn-content">
+                <span>{isSubmitting ? "Parsing with AI..." : "Create expense with AI"}</span>
+                {!isSubmitting ? <ArrowRight size={16} /> : null}
+              </span>
             </button>
           </form>
         </section>
 
-        <section className={`panel${result ? " result-card" : ""}`}>
+        <section className="panel">
+          <div className="panel-header">
+            <div>
+              <p className="eyebrow">Current setup</p>
+              <h3>Active AI configuration</h3>
+            </div>
+          </div>
+
+          {configError ? (
+            <p className="form-error">{configError}</p>
+          ) : !config ? (
+            <div className="loading-pulse">Loading AI settings...</div>
+          ) : (
+            <div className="stack-group stack-group--compact">
+              <div className="kv-grid">
+                <div>
+                  <span className="kv-label">Model</span>
+                  <strong>{config.modelName || config.model || "Default backend model"}</strong>
+                </div>
+                <div>
+                  <span className="kv-label">API key</span>
+                  <strong>{config.apiKey ? "Configured" : "Using backend fallback or none"}</strong>
+                </div>
+              </div>
+              <div className="prompt-preview">
+                <span className="kv-label">System prompt</span>
+                <p>{config.systemPrompt || "No custom instructions saved."}</p>
+              </div>
+            </div>
+          )}
+        </section>
+
+        <section className="panel">
           <div className="panel-header">
             <div>
               <p className="eyebrow">Result</p>
               <h3>Saved expense preview</h3>
             </div>
           </div>
-          {isSubmitting ? (
-            <p className="empty-state">Analyzing your expense with AI...</p>
-          ) : !result ? (
+
+          {!result ? (
             <p className="empty-state">
-              Submit a sentence and the structured result will appear here.
+              Submit a sentence and the parsed expense plus saved record will appear here.
             </p>
           ) : (
             <div className="stack-group">
               <div>
-                <div className="button-row" style={{ alignItems: "center", justifyContent: "space-between" }}>
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: "0.75rem" }}>
-                    <CheckCircle2 size={20} color="#16825d" />
-                    <div>
-                      <strong>Expense saved successfully</strong>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={() => setResult(null)}
-                  >
-                    Parse another expense
-                  </button>
-                </div>
+                <p className="eyebrow">Parsed expense</p>
+                <pre>{JSON.stringify(result.parsedExpense, null, 2)}</pre>
               </div>
               <ul className="data-list">
                 <li>
                   <div>
-                    <strong>Amount</strong>
-                    <span>{formatCurrency(result.expense.amount)}</span>
+                    <strong>Category</strong>
+                    <span>{result.expense.categoryName}</span>
                   </div>
                 </li>
                 <li>
                   <div>
-                    <strong>Category</strong>
-                    <span>{result.expense.categoryName}</span>
+                    <strong>Amount</strong>
+                    <span>{formatCurrency(result.expense.amount)}</span>
                   </div>
                 </li>
                 <li>
@@ -140,11 +195,10 @@ export default function AiAssistantPage() {
                 <li>
                   <div>
                     <strong>Note</strong>
-                    <span>{result.expense.note || "—"}</span>
+                    <span>{result.expense.note || "No note saved"}</span>
                   </div>
                 </li>
               </ul>
-              <p className="empty-state">This expense has been added to your records.</p>
             </div>
           )}
         </section>

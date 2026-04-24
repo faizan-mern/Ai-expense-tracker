@@ -15,9 +15,21 @@ export function clearStoredToken() {
 
 async function parseResponse(response) {
   const isJson = response.headers.get("content-type")?.includes("application/json");
-  const payload = isJson ? await response.json() : null;
+  let payload = null;
+
+  if (isJson) {
+    payload = await response.json();
+  }
 
   if (!response.ok) {
+    if (!isJson) {
+      await response.text();
+      throw new Error(
+        response.status >= 500
+          ? "Server is waking up. Please try again in a moment."
+          : "Request failed"
+      );
+    }
     throw new Error(payload?.message || "Request failed");
   }
 

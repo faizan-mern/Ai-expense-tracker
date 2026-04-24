@@ -1,14 +1,14 @@
-import { Bot } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { AlertCircle, Loader2, Lock, Mail } from "lucide-react";
 
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [form, setForm] = useState({ email: "", password: "" });
-  const [error, setError] = useState("");
+  const[error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event) {
@@ -37,10 +37,6 @@ export default function LoginPage() {
   return (
     <div className="auth-shell">
       <div className="auth-panel">
-        <div className="auth-brand">
-          <Bot size={16} />
-          <span>AI Expense Tracker</span>
-        </div>
         <p className="eyebrow">Welcome back</p>
         <h1>Sign in to your expense workspace.</h1>
         <p className="auth-copy">
@@ -51,32 +47,48 @@ export default function LoginPage() {
         <form className="auth-form" onSubmit={handleSubmit}>
           <label>
             Email
-            <input
-              type="email"
-              value={form.email}
-              autoComplete="email"
-              onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
-              required
-            />
+            <div className="input-wrapper">
+              <Mail className="input-icon" />
+              <input
+                type="email"
+                value={form.email}
+                autoComplete="email"
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, email: event.target.value }))
+                }
+                required
+              />
+            </div>
           </label>
 
           <label>
             Password
-            <input
-              type="password"
-              value={form.password}
-              autoComplete="current-password"
-              onChange={(event) =>
-                setForm((current) => ({ ...current, password: event.target.value }))
-              }
-              required
-            />
+            <div className="input-wrapper">
+              <Lock className="input-icon" />
+              <input
+                type="password"
+                value={form.password}
+                autoComplete="current-password"
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, password: event.target.value }))
+                }
+                required
+              />
+            </div>
           </label>
 
-          {error ? <p className="form-error">{error}</p> : null}
+          {error && (
+            <div className="form-error">
+              <AlertCircle size={18} />
+              <p>{error}</p>
+            </div>
+          )}
 
           <button type="submit" className="primary-button" disabled={isSubmitting}>
-            {isSubmitting ? "Signing in..." : "Login"}
+            <div className="btn-content">
+              {isSubmitting ? <Loader2 className="spin" size={18} /> : null}
+              <span>{isSubmitting ? "Signing in..." : "Login"}</span>
+            </div>
           </button>
         </form>
 

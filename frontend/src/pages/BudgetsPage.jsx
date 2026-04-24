@@ -333,43 +333,45 @@ export default function BudgetsPage() {
           <span>{categoryBudgets.length} entries</span>
         </div>
         {isLoading ? (
-          <div className="loading-pulse">Loading...</div>
+          <div className="loading-pulse">Loading budget breakdown...</div>
         ) : categoryBudgets.length === 0 ? (
           <p className="empty-state">No category budgets saved for this month yet.</p>
         ) : (
-          <div className="stack-group">
-            {categoryBudgets.map((budget) => (
-              <article key={budget.id} className="budget-card">
-                <div className="budget-card__header">
-                  <div>
-                    <strong>{budget.categoryName}</strong>
-                    <span>{formatMonthLabel(budget.budgetMonth)}</span>
+          <div className="panel-scroll-region">
+            <div className="stack-group">
+              {categoryBudgets.map((budget) => (
+                <article key={budget.id} className="budget-card">
+                  <div className="budget-card__header">
+                    <div>
+                      <strong>{budget.categoryName}</strong>
+                      <span>{formatMonthLabel(budget.budgetMonth)}</span>
+                    </div>
+                    <strong>{budget.percentUsed}%</strong>
                   </div>
-                  <strong>{budget.percentUsed}%</strong>
-                </div>
-                <div className="progress-track">
-                  <span style={{ width: `${Math.min(budget.percentUsed, 100)}%` }} />
-                </div>
-                <div className="budget-card__meta">
-                  <span>Spent {formatCurrency(budget.spent)}</span>
-                  <span>Budget {formatCurrency(budget.amount)}</span>
-                </div>
-                <div className="budget-card__meta">
-                  <span>
-                    {budget.spent > budget.amount
-                      ? `${formatCurrency(budget.spent - budget.amount)} over budget`
-                      : `${formatCurrency(budget.amount - budget.spent)} remaining`}
-                  </span>
-                  <button
-                    type="button"
-                    className="text-button danger"
-                    onClick={() => handleDelete(budget.id)}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </article>
-            ))}
+                  <div className="progress-track">
+                    <span style={{ width: `${Math.min(budget.percentUsed, 100)}%` }} />
+                  </div>
+                  <div className="budget-card__meta">
+                    <span>Spent {formatCurrency(budget.spent)}</span>
+                    <span>Budget {formatCurrency(budget.amount)}</span>
+                  </div>
+                  <div className="budget-card__meta">
+                    <span>
+                      {budget.spent > budget.amount
+                        ? `${formatCurrency(budget.spent - budget.amount)} over budget`
+                        : `${formatCurrency(budget.amount - budget.spent)} remaining`}
+                    </span>
+                    <button
+                      type="button"
+                      className="text-button danger"
+                      onClick={() => handleDelete(budget.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
         )}
       </section>

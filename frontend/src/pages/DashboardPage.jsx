@@ -70,12 +70,12 @@ export default function DashboardPage() {
 
   const totalSpent = state.expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
   const unreadAlerts = state.alerts.filter((alert) => !alert.isRead).length;
-  const overallBudget =
-    state.budgets.find((budget) => budget.categoryId === null) || null;
+  const overallBudget = state.budgets.find((budget) => budget.categoryId === null) || null;
   const categoryBudgets = state.budgets.filter((budget) => budget.categoryId !== null);
   const remainingBudget = overallBudget
     ? Math.max(Number(overallBudget.amount) - totalSpent, 0)
     : null;
+
   const spendingChartData = Array.from(
     state.expenses.reduce((groups, expense) => {
       const existingGroup = groups.get(expense.expenseDate) || 0;
@@ -98,7 +98,7 @@ export default function DashboardPage() {
           <p className="eyebrow">Dashboard</p>
           <h2>{formatMonthLabel(currentMonth)} at a glance.</h2>
           <p className="page-copy">
-            See spending, budget pressure, and alert activity without jumping between modules.
+            Review spend, budget pressure, and alert activity without bouncing between modules.
           </p>
         </div>
         <span className="status-pill">{formatMonthLabel(currentMonth)}</span>
@@ -139,10 +139,10 @@ export default function DashboardPage() {
             <p className="eyebrow">Spending chart</p>
             <h3>Daily breakdown</h3>
           </div>
-          <span>Daily spending — {formatMonthLabel(currentMonth)}</span>
+          <span>{formatMonthLabel(currentMonth)}</span>
         </div>
         {state.isLoading ? (
-          <div className="loading-pulse">Loading...</div>
+          <div className="loading-pulse">Loading dashboard chart...</div>
         ) : spendingChartData.length === 0 ? (
           <p className="empty-state">No spending data for this month yet.</p>
         ) : (
@@ -155,7 +155,7 @@ export default function DashboardPage() {
                 formatter={(value) => formatCurrency(value)}
                 labelFormatter={(_, payload) => payload?.[0]?.payload?.dateLabel || ""}
               />
-              <Bar dataKey="amount" fill="#16825d" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="amount" fill="#177b5a" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         )}
@@ -171,9 +171,11 @@ export default function DashboardPage() {
             <span>{state.expenses.length} this month</span>
           </div>
           {state.isLoading ? (
-            <div className="loading-pulse">Loading...</div>
+            <div className="loading-pulse">Loading recent expenses...</div>
           ) : state.expenses.length === 0 ? (
-            <p className="empty-state">No expenses yet. Add your first transaction to activate the dashboard.</p>
+            <p className="empty-state">
+              No expenses yet. Add your first transaction to activate the dashboard.
+            </p>
           ) : (
             <ul className="data-list">
               {state.expenses.slice(0, 5).map((expense) => (
@@ -200,29 +202,31 @@ export default function DashboardPage() {
             </div>
           </div>
           {state.isLoading ? (
-            <div className="loading-pulse">Loading...</div>
+            <div className="loading-pulse">Loading budget usage...</div>
           ) : state.budgets.length === 0 ? (
             <p className="empty-state">No budgets saved for this month yet.</p>
           ) : (
-            <div className="stack-group">
-              {state.budgets.map((budget) => (
-                <article key={budget.id} className="budget-card">
-                  <div className="budget-card__header">
-                    <div>
-                      <strong>{budget.categoryName || "Overall monthly budget"}</strong>
-                      <span>{formatMonthLabel(budget.budgetMonth)}</span>
+            <div className="panel-scroll-region">
+              <div className="stack-group">
+                {state.budgets.map((budget) => (
+                  <article key={budget.id} className="budget-card">
+                    <div className="budget-card__header">
+                      <div>
+                        <strong>{budget.categoryName || "Overall monthly budget"}</strong>
+                        <span>{formatMonthLabel(budget.budgetMonth)}</span>
+                      </div>
+                      <strong>{budget.percentUsed}%</strong>
                     </div>
-                    <strong>{budget.percentUsed}%</strong>
-                  </div>
-                  <div className="progress-track">
-                    <span style={{ width: `${Math.min(budget.percentUsed, 100)}%` }} />
-                  </div>
-                  <div className="budget-card__meta">
-                    <span>Spent {formatCurrency(budget.spent)}</span>
-                    <span>Budget {formatCurrency(budget.amount)}</span>
-                  </div>
-                </article>
-              ))}
+                    <div className="progress-track">
+                      <span style={{ width: `${Math.min(budget.percentUsed, 100)}%` }} />
+                    </div>
+                    <div className="budget-card__meta">
+                      <span>Spent {formatCurrency(budget.spent)}</span>
+                      <span>Budget {formatCurrency(budget.amount)}</span>
+                    </div>
+                  </article>
+                ))}
+              </div>
             </div>
           )}
         </section>
@@ -237,9 +241,11 @@ export default function DashboardPage() {
           <span>{state.alerts.length} total</span>
         </div>
         {state.isLoading ? (
-          <div className="loading-pulse">Loading...</div>
+          <div className="loading-pulse">Loading alerts...</div>
         ) : state.alerts.length === 0 ? (
-          <p className="empty-state">No alerts yet. Budget and unusual-spend alerts will appear here.</p>
+          <p className="empty-state">
+            No alerts yet. Budget and unusual-spend alerts will appear here.
+          </p>
         ) : (
           <ul className="data-list">
             {state.alerts.slice(0, 4).map((alert) => (

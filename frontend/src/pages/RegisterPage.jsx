@@ -1,18 +1,18 @@
-import { Bot } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { AlertCircle, Loader2, Lock, Mail, User as UserIcon } from "lucide-react";
 
 export default function RegisterPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({
+  const[form, setForm] = useState({
     fullName: "",
     email: "",
     password: "",
   });
   const [error, setError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const[isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -41,60 +41,74 @@ export default function RegisterPage() {
   return (
     <div className="auth-shell">
       <div className="auth-panel">
-        <div className="auth-brand">
-          <Bot size={16} />
-          <span>AI Expense Tracker</span>
-        </div>
         <p className="eyebrow">Create account</p>
-        <h1>Start tracking with a cleaner system from day one.</h1>
+        <h1>Start tracking with a cleaner system.</h1>
         <p className="auth-copy">
-          Set up your account and use the backend you already built to manage
-          expenses, budgets, alerts, and AI-assisted entries.
+          Set up your account to manage expenses, budgets, alerts, and AI-assisted entries.
         </p>
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <label>
             Full name
-            <input
-              type="text"
-              value={form.fullName}
-              autoComplete="name"
-              onChange={(event) =>
-                setForm((current) => ({ ...current, fullName: event.target.value }))
-              }
-              required
-            />
+            <div className="input-wrapper">
+              <UserIcon className="input-icon" />
+              <input
+                type="text"
+                value={form.fullName}
+                autoComplete="name"
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, fullName: event.target.value }))
+                }
+                required
+              />
+            </div>
           </label>
 
           <label>
             Email
-            <input
-              type="email"
-              value={form.email}
-              autoComplete="email"
-              onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
-              required
-            />
+            <div className="input-wrapper">
+              <Mail className="input-icon" />
+              <input
+                type="email"
+                value={form.email}
+                autoComplete="email"
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, email: event.target.value }))
+                }
+                required
+              />
+            </div>
           </label>
 
           <label>
             Password
-            <input
-              type="password"
-              value={form.password}
-              autoComplete="new-password"
-              onChange={(event) =>
-                setForm((current) => ({ ...current, password: event.target.value }))
-              }
-              minLength={6}
-              required
-            />
+            <div className="input-wrapper">
+              <Lock className="input-icon" />
+              <input
+                type="password"
+                value={form.password}
+                autoComplete="new-password"
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, password: event.target.value }))
+                }
+                minLength={6}
+                required
+              />
+            </div>
           </label>
 
-          {error ? <p className="form-error">{error}</p> : null}
+          {error && (
+            <div className="form-error">
+              <AlertCircle size={18} />
+              <p>{error}</p>
+            </div>
+          )}
 
           <button type="submit" className="primary-button" disabled={isSubmitting}>
-            {isSubmitting ? "Creating account..." : "Register"}
+            <div className="btn-content">
+              {isSubmitting ? <Loader2 className="spin" size={18} /> : null}
+              <span>{isSubmitting ? "Creating account..." : "Register"}</span>
+            </div>
           </button>
         </form>
 

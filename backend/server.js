@@ -1,12 +1,16 @@
 const express = require("express");
 const cors = require("cors");
 require("./config/env");
+
 const authRoutes = require("./routes/authRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const expenseRoutes = require("./routes/expenseRoutes");
 const budgetRoutes = require("./routes/budgetRoutes");
 const alertRoutes = require("./routes/alertRoutes");
 const aiRoutes = require("./routes/aiRoutes");
+
+const authMiddleware = require("./middleware/authMiddleware");
+const { getAvailableModels } = require("./controllers/aiSettingsController");
 
 const app = express();
 
@@ -31,6 +35,8 @@ app.use("/api/expenses", expenseRoutes);
 app.use("/api/budgets", budgetRoutes);
 app.use("/api/alerts", alertRoutes);
 app.use("/api/ai", aiRoutes);
+
+app.get(["/v1/models", "/api/v1/models"], authMiddleware, getAvailableModels);
 
 const PORT = process.env.PORT || 5000;
 

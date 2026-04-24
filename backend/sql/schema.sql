@@ -75,3 +75,13 @@ CREATE INDEX IF NOT EXISTS budgets_user_month_idx
 
 CREATE INDEX IF NOT EXISTS alerts_user_read_idx
   ON alerts (user_id, is_read, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS ai_settings (
+  id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  api_key TEXT,
+  model_name VARCHAR(100) NOT NULL DEFAULT 'openai/gpt-4o-mini',
+  system_prompt TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { createCategory, fetchCategories } from "../api/categoryApi";
-import { useToast } from "../components/ui/Toast";
 import {
   createExpense,
   deleteExpense,
@@ -10,7 +9,12 @@ import {
 import { formatCurrency, formatDateLabel } from "../utils/formatters";
 
 function getTodayDateValue() {
-  return new Date().toISOString().slice(0, 10);
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Karachi",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
 }
 
 function createInitialExpenseForm() {
@@ -33,7 +37,6 @@ const initialFilters = {
 };
 
 export default function ExpensesPage() {
-  const { showToast } = useToast();
   const [categories, setCategories] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [expenseForm, setExpenseForm] = useState(createInitialExpenseForm);
@@ -76,7 +79,7 @@ export default function ExpensesPage() {
     return () => {
       isCancelled = true;
     };
-  }, []);
+  },[]);
 
   async function handleExpenseSubmit(event) {
     event.preventDefault();
@@ -92,10 +95,8 @@ export default function ExpensesPage() {
     try {
       if (editingId) {
         await updateExpense(editingId, payload);
-        showToast("Expense updated", "success");
       } else {
         await createExpense(payload);
-        showToast("Expense saved", "success");
       }
 
       setExpenseForm(createInitialExpenseForm());
@@ -103,7 +104,6 @@ export default function ExpensesPage() {
       await loadExpenses();
     } catch (submitError) {
       setError(submitError.message);
-      showToast(submitError.message, "error");
     }
   }
 
@@ -124,7 +124,6 @@ export default function ExpensesPage() {
       setCategoryForm(initialCategoryForm);
     } catch (submitError) {
       setError(submitError.message);
-      showToast(submitError.message, "error");
     }
   }
 
@@ -137,7 +136,6 @@ export default function ExpensesPage() {
       await loadExpenses(filters);
     } catch (filterError) {
       setError(filterError.message);
-      showToast(filterError.message, "error");
     } finally {
       setIsLoading(false);
     }
@@ -168,10 +166,22 @@ export default function ExpensesPage() {
     try {
       await deleteExpense(expenseId);
       await loadExpenses();
-      showToast("Expense deleted", "success");
     } catch (deleteError) {
       setError(deleteError.message);
-      showToast(deleteError.message, "error");
+    }
+  }
+
+  async function handleClearFilters() {
+    setError("");
+    setIsLoading(true);
+
+    try {
+      setFilters(initialFilters);
+      await loadExpenses(initialFilters);
+    } catch (filterError) {
+      setError(filterError.message);
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -188,6 +198,7 @@ export default function ExpensesPage() {
             Add transactions, keep categories tidy, and review your ledger without losing context.
           </p>
         </div>
+        <span className="status-pill">{expenses.length} visible</span>
       </header>
 
       {error ? <p className="form-error">{error}</p> : null}
@@ -319,7 +330,7 @@ export default function ExpensesPage() {
         </section>
       </div>
 
-      <section className="panel">
+      <section className="panel panel--soft ledger-toolbar">
         <div className="panel-header">
           <div>
             <p className="eyebrow">Filters</p>
@@ -368,9 +379,14 @@ export default function ExpensesPage() {
           </label>
 
           <div className="align-end">
-            <button type="submit" className="secondary-button">
-              Apply filters
-            </button>
+            <div className="button-row">
+              <button type="submit" className="secondary-button">
+                Apply filters
+              </button>
+              <button type="button" className="ghost-button" onClick={handleClearFilters}>
+                Clear
+              </button>
+            </div>
           </div>
         </form>
       </section>
@@ -385,7 +401,7 @@ export default function ExpensesPage() {
         </div>
 
         {isLoading ? (
-          <div className="loading-pulse">Loading...</div>
+          <p className="empty-state">Loading expenses...</p>
         ) : expenses.length === 0 ? (
           <p className="empty-state">No expenses found for the current selection.</p>
         ) : (
@@ -404,9 +420,7 @@ export default function ExpensesPage() {
                 {expenses.map((expense) => (
                   <tr key={expense.id}>
                     <td>{formatDateLabel(expense.expenseDate)}</td>
-                    <td>
-                      <span className="category-pill">{expense.categoryName}</span>
-                    </td>
+                    <td>{expense.categoryName}</td>
                     <td>{formatCurrency(expense.amount)}</td>
                     <td>{expense.note || "-"}</td>
                     <td className="table-actions">

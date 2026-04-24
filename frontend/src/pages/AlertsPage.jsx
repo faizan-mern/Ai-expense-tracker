@@ -14,13 +14,13 @@ function getAlertTypeMeta(alertType) {
   if (alertType === "near_limit") {
     return {
       Icon: AlertTriangle,
-      color: "#d97706",
+      color: "var(--warning)",
     };
   }
 
   return {
     Icon: Zap,
-    color: "#7c3aed",
+    color: "#5f6cf2",
   };
 }
 
@@ -79,7 +79,8 @@ export default function AlertsPage() {
           <p className="eyebrow">Alerts</p>
           <h2>Review the signals that need attention.</h2>
           <p className="page-copy">
-            Keep unread warnings visible and clear them once you've checked the spending pattern behind them.
+            Keep unread warnings visible and clear them once you have reviewed the underlying
+            spending pattern.
           </p>
         </div>
         <label className="inline-toggle">
@@ -108,40 +109,50 @@ export default function AlertsPage() {
       </div>
 
       <section className="panel">
+        <div className="panel-header">
+          <div>
+            <p className="eyebrow">Queue</p>
+            <h3>Alert activity</h3>
+          </div>
+          <span className="status-pill">{unreadOnly ? "Unread filter on" : "All alerts"}</span>
+        </div>
+
         {isLoading ? (
-          <div className="loading-pulse">Loading...</div>
+          <div className="loading-pulse">Loading alerts...</div>
         ) : alerts.length === 0 ? (
           <p className="empty-state">No alerts for the current filter.</p>
         ) : (
-          <ul className="alert-list">
-            {alerts.map((alert) => {
-              const { Icon, color } = getAlertTypeMeta(alert.alertType);
+          <div className="panel-scroll-region">
+            <ul className="alert-list">
+              {alerts.map((alert) => {
+                const { Icon, color } = getAlertTypeMeta(alert.alertType);
 
-              return (
-                <li key={alert.id} className={!alert.isRead ? "unread" : ""}>
-                  <div>
-                    <div className="alert-eyebrow">
-                      <Icon size={16} color={color} />
-                      <p className="eyebrow">{alert.alertType.replace(/_/g, " ")}</p>
+                return (
+                  <li key={alert.id} className={!alert.isRead ? "unread" : ""}>
+                    <div>
+                      <div className="alert-eyebrow">
+                        <Icon size={16} color={color} />
+                        <p className="eyebrow">{alert.alertType.replace(/_/g, " ")}</p>
+                      </div>
+                      <strong>{alert.message}</strong>
+                      <small>{formatDateTimeLabel(alert.createdAt)}</small>
                     </div>
-                    <strong>{alert.message}</strong>
-                    <small>{formatDateTimeLabel(alert.createdAt)}</small>
-                  </div>
-                  {!alert.isRead ? (
-                    <button
-                      type="button"
-                      className="secondary-button"
-                      onClick={() => handleMarkAsRead(alert.id)}
-                    >
-                      Mark as read
-                    </button>
-                  ) : (
-                    <span className="status-pill">Read</span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+                    {!alert.isRead ? (
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={() => handleMarkAsRead(alert.id)}
+                      >
+                        Mark as read
+                      </button>
+                    ) : (
+                      <span className="status-pill">Read</span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         )}
       </section>
     </section>

@@ -23,7 +23,7 @@ const dateTimeFormatter = new Intl.DateTimeFormat("en-PK", {
   minute: "2-digit",
 });
 
-export const MONTH_OPTIONS = [
+export const MONTH_OPTIONS =[
   { value: "01", label: "January" },
   { value: "02", label: "February" },
   { value: "03", label: "March" },
@@ -91,8 +91,14 @@ export function formatDateTimeLabel(value) {
   return dateTimeFormatter.format(date);
 }
 
-export function getCurrentMonthValue(date = new Date()) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+export function getCurrentMonthValue() {
+  const dateStr = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Karachi",
+    year: "numeric",
+    month: "2-digit"
+  }).format(new Date());
+  
+  return dateStr.slice(0, 7);
 }
 
 export function splitBudgetMonth(value = getCurrentMonthValue()) {
@@ -114,7 +120,7 @@ export function getYearOptions(centerYear = new Date().getFullYear()) {
 
 export function getMonthDateRange(value) {
   const normalizedValue = value || getCurrentMonthValue();
-  const [year, month] = normalizedValue.split("-").map(Number);
+  const[year, month] = normalizedValue.split("-").map(Number);
 
   if (!year || !month) {
     return {
