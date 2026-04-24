@@ -26,6 +26,7 @@ export default function AiAssistantPage() {
   const { showToast } = useToast();
   const [text, setText] = useState("");
   const [result, setResult] = useState(null);
+  const [lastUserMessage, setLastUserMessage] = useState("");
   const [error, setError] = useState("");
   const [configError, setConfigError] = useState("");
   const [config, setConfig] = useState(null);
@@ -58,6 +59,7 @@ export default function AiAssistantPage() {
     event.preventDefault();
     setError("");
     setResult(null);
+    setLastUserMessage(String(text || "").trim());
     setIsSubmitting(true);
 
     try {
@@ -182,11 +184,42 @@ export default function AiAssistantPage() {
               <CardTitle eyebrow="Saved entry">Result</CardTitle>
             </CardHeader>
             <CardContent>
-              {!result ? (
+              {isSubmitting && lastUserMessage ? (
+                <div className="stack-group stack-group--compact">
+                  <div
+                    style={{
+                      justifySelf: "end",
+                      maxWidth: "90%",
+                      background: "rgba(23, 123, 90, 0.12)",
+                      color: "var(--text)",
+                      borderRadius: "12px",
+                      padding: "0.6rem 0.75rem",
+                      fontSize: "0.9rem",
+                    }}
+                  >
+                    {lastUserMessage}
+                  </div>
+                  <div className="ai-thinking-bubble">
+                    <span
+                      className="ai-thinking-dot"
+                      style={{ animationDelay: "0ms" }}
+                    />
+                    <span
+                      className="ai-thinking-dot"
+                      style={{ animationDelay: "150ms" }}
+                    />
+                    <span
+                      className="ai-thinking-dot"
+                      style={{ animationDelay: "300ms" }}
+                    />
+                  </div>
+                </div>
+              ) : !result ? (
                 <p className="empty-state">
                   The saved expense will appear here after submission.
                 </p>
               ) : (
+                <>
                 <ul className="data-list">
                   <li>
                     <div>
@@ -213,11 +246,58 @@ export default function AiAssistantPage() {
                     </div>
                   </li>
                 </ul>
+                {result.expense?.id ? (
+                  <div style={{ marginTop: "0.8rem" }}>
+                    <Link
+                      to="/expenses"
+                      style={{
+                        color: "var(--accent-dark)",
+                        fontSize: "0.86rem",
+                        fontWeight: 700,
+                      }}
+                    >
+                      View expense &rarr;
+                    </Link>
+                  </div>
+                ) : null}
+                </>
               )}
             </CardContent>
           </Card>
         </div>
       </div>
+      <style>{`
+        .ai-thinking-bubble {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          width: fit-content;
+          padding: 0.55rem 0.75rem;
+          border-radius: 12px;
+          background: rgba(20, 33, 28, 0.06);
+        }
+
+        .ai-thinking-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 999px;
+          background: var(--muted);
+          animation: ai-thinking-pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes ai-thinking-pulse {
+          0%,
+          100% {
+            opacity: 0.2;
+            transform: translateY(0);
+          }
+
+          50% {
+            opacity: 1;
+            transform: translateY(-1px);
+          }
+        }
+      `}</style>
     </section>
   );
 }

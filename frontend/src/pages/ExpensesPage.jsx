@@ -206,6 +206,39 @@ export default function ExpensesPage() {
           </CardHeader>
           <CardContent>
             <form className="stack-form" onSubmit={handleExpenseSubmit}>
+              {editingId ? (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "0.75rem",
+                    padding: "0.65rem 0.8rem",
+                    borderLeft: "3px solid var(--accent)",
+                    background: "rgba(23, 123, 90, 0.08)",
+                    borderRadius: "10px",
+                    fontSize: "0.82rem",
+                    color: "var(--muted)",
+                  }}
+                >
+                  <span>Editing expense — click Cancel to discard changes</span>
+                  <button
+                    type="button"
+                    onClick={handleCancelEdit}
+                    style={{
+                      border: "none",
+                      background: "transparent",
+                      color: "var(--accent-dark)",
+                      fontWeight: 700,
+                      fontSize: "0.8rem",
+                      padding: 0,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : null}
               <div className="field-grid">
                 <label>
                   Amount

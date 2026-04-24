@@ -11,15 +11,32 @@ import { formatDateTimeLabel } from "../utils/formatters";
 const ITEMS_PER_PAGE = 10;
 
 const ALERT_TYPE_LABELS = {
-  budget_exceeded: "Budget Exceeded",
-  near_limit: "Near Limit",
-  unusual_expense: "Unusual Expense",
+  near_limit: "Approaching limit",
+  budget_exceeded: "Budget exceeded",
+  unusual_expense: "Unusual spend",
 };
+
+function isToday(dateString) {
+  const today = new Date().toDateString();
+  return new Date(dateString).toDateString() === today;
+}
 
 function getAlertTypeMeta(alertType) {
   if (alertType === "budget_exceeded") return { Icon: TrendingDown, color: "var(--danger)" };
   if (alertType === "near_limit") return { Icon: AlertTriangle, color: "var(--warning)" };
-  return { Icon: Zap, color: "#5f6cf2" };
+  return { Icon: Zap, color: "#177B5A" };
+}
+
+function getAlertBorderColor(alertType) {
+  if (alertType === "budget_exceeded") {
+    return "#c0392b";
+  }
+
+  if (alertType === "near_limit") {
+    return "#e67e22";
+  }
+
+  return "#177B5A";
 }
 
 export default function AlertsPage() {
@@ -97,6 +114,52 @@ export default function AlertsPage() {
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
+  const todayAlerts = paginatedAlerts.filter((alert) => isToday(alert.createdAt));
+  const earlierAlerts = paginatedAlerts.filter((alert) => !isToday(alert.createdAt));
+
+  function renderAlertItem(alert) {
+    const { Icon, color } = getAlertTypeMeta(alert.alertType);
+    const alertBorderColor = getAlertBorderColor(alert.alertType);
+
+    return (
+      <li
+        key={alert.id}
+        className={!alert.isRead ? "unread" : ""}
+        style={{
+          borderLeft: `3px solid ${alertBorderColor}`,
+          borderTopLeftRadius: 0,
+          borderBottomLeftRadius: 0,
+          paddingLeft: "0.8rem",
+        }}
+      >
+        <div>
+          <div className="alert-eyebrow">
+            <Icon size={15} color={color} />
+            <p className="eyebrow">
+              {ALERT_TYPE_LABELS[alert.alertType] || alert.alertType}
+            </p>
+          </div>
+          <strong className="text-sm">{alert.message}</strong>
+          <small className="text-[#63736b]">
+            {formatDateTimeLabel(alert.createdAt)}
+          </small>
+        </div>
+        {!alert.isRead ? (
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => handleMarkAsRead(alert.id)}
+            disabled={markingId === alert.id}
+          >
+            {markingId === alert.id ? "Marking..." : "Mark as read"}
+          </Button>
+        ) : (
+          <Badge variant="muted">Read</Badge>
+        )}
+      </li>
+    );
+  }
 
   return (
     <section className="page">
@@ -158,40 +221,26 @@ export default function AlertsPage() {
             <p className="empty-state">No alerts for the current filter.</p>
           ) : (
             <>
-              <ul className="alert-list">
-                {paginatedAlerts.map((alert) => {
-                  const { Icon, color } = getAlertTypeMeta(alert.alertType);
-                  return (
-                    <li key={alert.id} className={!alert.isRead ? "unread" : ""}>
-                      <div>
-                        <div className="alert-eyebrow">
-                          <Icon size={15} color={color} />
-                          <p className="eyebrow">
-                            {ALERT_TYPE_LABELS[alert.alertType] ?? alert.alertType.replace(/_/g, " ")}
-                          </p>
-                        </div>
-                        <strong className="text-sm">{alert.message}</strong>
-                        <small className="text-[#63736b]">
-                          {formatDateTimeLabel(alert.createdAt)}
-                        </small>
-                      </div>
-                      {!alert.isRead ? (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => handleMarkAsRead(alert.id)}
-                          disabled={markingId === alert.id}
-                        >
-                          {markingId === alert.id ? "Marking..." : "Mark as read"}
-                        </Button>
-                      ) : (
-                        <Badge variant="muted">Read</Badge>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
+              {todayAlerts.length > 0 ? (
+                <div style={{ marginBottom: "0.75rem" }}>
+                  <p className="eyebrow" style={{ margin: 0 }}>Today</p>
+                </div>
+              ) : null}
+              {todayAlerts.length > 0 ? (
+                <ul className="alert-list" style={{ marginBottom: "1rem" }}>
+                  {todayAlerts.map((alert) => renderAlertItem(alert))}
+                </ul>
+              ) : null}
+              {earlierAlerts.length > 0 ? (
+                <div style={{ marginBottom: "0.75rem" }}>
+                  <p className="eyebrow" style={{ margin: 0 }}>Earlier</p>
+                </div>
+              ) : null}
+              {earlierAlerts.length > 0 ? (
+                <ul className="alert-list">
+                  {earlierAlerts.map((alert) => renderAlertItem(alert))}
+                </ul>
+              ) : null}
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}

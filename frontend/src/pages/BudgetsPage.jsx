@@ -3,19 +3,16 @@ import { useEffect, useMemo, useState } from "react";
 import { fetchCategories } from "../api/categoryApi";
 import { deleteBudget, fetchBudgets, saveBudget } from "../api/budgetApi";
 import { fetchExpenses } from "../api/expenseApi";
+import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle, MetricCard } from "../components/ui/Card";
 import { ConfirmModal } from "../components/ui/ConfirmModal";
 import { useToast } from "../components/ui/Toast";
 import {
-  MONTH_OPTIONS,
-  buildBudgetMonthValue,
   formatCurrency,
   formatMonthLabel,
   getCurrentMonthValue,
   getMonthDateRange,
-  getYearOptions,
-  splitBudgetMonth,
 } from "../utils/formatters";
 
 const initialForm = { amount: "", categoryId: "" };
@@ -36,8 +33,6 @@ export default function BudgetsPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [confirmingDelete, setConfirmingDelete] = useState(null);
-
-  const { year: selectedYear, month: selectedMonthNumber } = splitBudgetMonth(selectedMonth);
 
   useEffect(() => {
     let isCancelled = false;
@@ -125,13 +120,6 @@ export default function BudgetsPage() {
     [monthExpenses]
   );
   const remaining = overallBudget ? Number(overallBudget.amount) - totalSpent : null;
-  const availableYears = getYearOptions();
-
-  function handleMonthPartChange(nextValue, part) {
-    const nextYear = part === "year" ? nextValue : selectedYear;
-    const nextMonthNumber = part === "month" ? nextValue : selectedMonthNumber;
-    setSelectedMonth(buildBudgetMonthValue(nextYear, nextMonthNumber));
-  }
 
   return (
     <section className="page">
@@ -161,22 +149,14 @@ export default function BudgetsPage() {
           </span>
         </CardHeader>
         <CardContent>
-          <div className="field-grid field-grid--month">
+          <div style={{ maxWidth: "320px" }}>
             <label>
               Month
-              <select value={selectedMonthNumber} onChange={(e) => handleMonthPartChange(e.target.value, "month")}>
-                {MONTH_OPTIONS.map((m) => (
-                  <option key={m.value} value={m.value}>{m.label}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Year
-              <select value={selectedYear} onChange={(e) => handleMonthPartChange(e.target.value, "year")}>
-                {availableYears.map((y) => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
+              <input
+                type="month"
+                value={selectedMonth}
+                onChange={(event) => setSelectedMonth(event.target.value)}
+              />
             </label>
           </div>
         </CardContent>
@@ -300,20 +280,26 @@ export default function BudgetsPage() {
                   <article key={budget.id} className="budget-card">
                     <div className="budget-card__header">
                       <div>
-                        <strong>{budget.categoryName}</strong>
+                        <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+                          <strong>{budget.categoryName}</strong>
+                          {budget.percentUsed >= 100 ? (
+                            <Badge variant="danger">Exceeded</Badge>
+                          ) : null}
+                          {budget.percentUsed >= 80 && budget.percentUsed < 100 ? (
+                            <Badge variant="warning">Near limit</Badge>
+                          ) : null}
+                        </div>
                         <span>{formatMonthLabel(budget.budgetMonth)}</span>
                       </div>
-                      <strong>{budget.percentUsed}%</strong>
+                      <strong>
+                        {budget.percentUsed}% • {formatCurrency(budget.spent)} / {formatCurrency(budget.amount)}
+                      </strong>
                     </div>
                     <div className="progress-track">
                       <span style={{
                         width: `${Math.min(budget.percentUsed, 100)}%`,
                         background: getBudgetBarColor(budget.percentUsed),
                       }} />
-                    </div>
-                    <div className="budget-card__meta">
-                      <span>Spent {formatCurrency(budget.spent)}</span>
-                      <span>Budget {formatCurrency(budget.amount)}</span>
                     </div>
                     <div className="budget-card__meta">
                       <span>

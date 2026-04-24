@@ -1,5 +1,15 @@
 import { AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
 import { fetchAlerts } from "../api/alertApi";
 import { fetchBudgets } from "../api/budgetApi";
 import { fetchExpenses } from "../api/expenseApi";
@@ -18,6 +28,16 @@ function getBudgetBarColor(pct) {
   if (pct >= 80) return "var(--warning)";
   return "var(--accent)";
 }
+
+const ON_TRACK_COLOR = "#177B5A";
+const NEAR_LIMIT_COLOR = "#e67e22";
+const OVER_BUDGET_COLOR = "#c0392b";
+
+const viewAllLinkStyle = {
+  color: "var(--muted)",
+  fontSize: "0.8rem",
+  fontWeight: 600,
+};
 
 export default function DashboardPage() {
   const currentMonth = getCurrentMonthValue();
@@ -105,6 +125,30 @@ export default function DashboardPage() {
   const averageDailySpend =
     activeSpendDays > 0 ? totalSpent / activeSpendDays : 0;
   const highestSpendDay = topSpendDays[0] || null;
+  const dailySpendChartData = dailySpendData.reduce((accumulator, day) => {
+    const previousCumulative = accumulator.length > 0
+      ? accumulator[accumulator.length - 1].cumulativeSpent
+      : 0;
+    const cumulativeSpent = previousCumulative + Number(day.amount);
+    let barColor = ON_TRACK_COLOR;
+
+    if (overallBudget && Number(overallBudget.amount) > 0) {
+      const pct = (cumulativeSpent / Number(overallBudget.amount)) * 100;
+      if (pct >= 100) {
+        barColor = OVER_BUDGET_COLOR;
+      } else if (pct >= 80) {
+        barColor = NEAR_LIMIT_COLOR;
+      }
+    }
+
+    accumulator.push({
+      ...day,
+      cumulativeSpent,
+      barColor,
+    });
+
+    return accumulator;
+  }, []);
 
   return (
     <section className="page">
@@ -169,66 +213,110 @@ export default function DashboardPage() {
           ) : dailySpendData.length === 0 ? (
             <p className="empty-state">No spending data for this month yet.</p>
           ) : (
-            <div className="workspace-grid workspace-grid--dashboard-summary">
-              <div className="stack-group">
-                <article className="budget-card">
-                  <div className="budget-card__header">
-                    <div>
-                      <strong className="text-sm">Highest spend day</strong>
-                      <span className="text-xs text-[#63736b]">
-                        Largest total recorded this month
-                      </span>
-                    </div>
-                    <strong className="text-sm">
-                      {highestSpendDay
-                        ? formatCurrency(highestSpendDay.amount)
-                        : formatCurrency(0)}
-                    </strong>
-                  </div>
-                  <div className="budget-card__meta">
-                    <span>{highestSpendDay?.dateLabel || "No data"}</span>
-                    <span>{activeSpendDays} active days</span>
-                  </div>
-                </article>
-
-                <article className="budget-card">
-                  <div className="budget-card__header">
-                    <div>
-                      <strong className="text-sm">Average active day</strong>
-                      <span className="text-xs text-[#63736b]">
-                        Mean spend across days with activity
-                      </span>
-                    </div>
-                    <strong className="text-sm">
-                      {formatCurrency(averageDailySpend)}
-                    </strong>
-                  </div>
-                  <div className="budget-card__meta">
-                    <span>{dailySpendData.length} days with spend</span>
-                    <span>{state.expenses.length} total expenses</span>
-                  </div>
-                </article>
+            <div className="stack-group">
+              <div style={{ width: "100%" }}>
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart data={dailySpendChartData}>
+                    <XAxis dataKey="dateLabel" interval={2} />
+                    <YAxis hide={true} />
+                    <Tooltip
+                      formatter={(value) => formatCurrency(value)}
+                      labelFormatter={(label) => label}
+                    />
+                    <Bar dataKey="amount" radius={[3, 3, 0, 0]}>
+                      {dailySpendChartData.map((entry) => (
+                        <Cell key={entry.expenseDate} fill={entry.barColor} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: "0.9rem",
+                    marginTop: "0.45rem",
+                    color: "var(--muted)",
+                    fontSize: "0.78rem",
+                  }}
+                >
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+                    <span style={{ width: 8, height: 8, borderRadius: 999, background: ON_TRACK_COLOR }} />
+                    On track
+                  </span>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+                    <span style={{ width: 8, height: 8, borderRadius: 999, background: NEAR_LIMIT_COLOR }} />
+                    Near limit
+                  </span>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+                    <span style={{ width: 8, height: 8, borderRadius: 999, background: OVER_BUDGET_COLOR }} />
+                    Over budget
+                  </span>
+                </div>
               </div>
 
-              <div>
-                <p className="eyebrow">Top spend days</p>
-                <ul className="data-list" style={{ marginTop: "0.85rem" }}>
-                  {topSpendDays.map((day) => (
-                    <li key={day.expenseDate}>
+              <div className="workspace-grid workspace-grid--dashboard-summary">
+                <div className="stack-group">
+                  <article className="budget-card">
+                    <div className="budget-card__header">
                       <div>
-                        <strong className="text-sm">{day.dateLabel}</strong>
-                        <span className="text-sm text-[#63736b]">
-                          Daily total
+                        <strong className="text-sm">Highest spend day</strong>
+                        <span className="text-xs text-[#63736b]">
+                          Largest total recorded this month
                         </span>
                       </div>
-                      <div className="list-meta">
-                        <strong className="text-sm">
-                          {formatCurrency(day.amount)}
-                        </strong>
+                      <strong className="text-sm">
+                        {highestSpendDay
+                          ? formatCurrency(highestSpendDay.amount)
+                          : formatCurrency(0)}
+                      </strong>
+                    </div>
+                    <div className="budget-card__meta">
+                      <span>{highestSpendDay?.dateLabel || "No data"}</span>
+                      <span>{activeSpendDays} active days</span>
+                    </div>
+                  </article>
+
+                  <article className="budget-card">
+                    <div className="budget-card__header">
+                      <div>
+                        <strong className="text-sm">Average active day</strong>
+                        <span className="text-xs text-[#63736b]">
+                          Mean spend across days with activity
+                        </span>
                       </div>
-                    </li>
-                  ))}
-                </ul>
+                      <strong className="text-sm">
+                        {formatCurrency(averageDailySpend)}
+                      </strong>
+                    </div>
+                    <div className="budget-card__meta">
+                      <span>{dailySpendData.length} days with spend</span>
+                      <span>{state.expenses.length} total expenses</span>
+                    </div>
+                  </article>
+                </div>
+
+                <div>
+                  <p className="eyebrow">Top spend days</p>
+                  <ul className="data-list" style={{ marginTop: "0.85rem" }}>
+                    {topSpendDays.map((day) => (
+                      <li key={day.expenseDate}>
+                        <div>
+                          <strong className="text-sm">{day.dateLabel}</strong>
+                          <span className="text-sm text-[#63736b]">
+                            Daily total
+                          </span>
+                        </div>
+                        <div className="list-meta">
+                          <strong className="text-sm">
+                            {formatCurrency(day.amount)}
+                          </strong>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             </div>
           )}
@@ -241,9 +329,14 @@ export default function DashboardPage() {
         <Card soft>
           <CardHeader>
             <CardTitle eyebrow="Recent activity">Latest expenses</CardTitle>
-            <span className="text-sm text-[#63736b]">
-              {state.expenses.length} this month
-            </span>
+            <div style={{ display: "grid", justifyItems: "end", gap: "0.25rem" }}>
+              <span className="text-sm text-[#63736b]">
+                {state.expenses.length} this month
+              </span>
+              <Link to="/expenses" style={viewAllLinkStyle}>
+                View all &rarr;
+              </Link>
+            </div>
           </CardHeader>
           <CardContent>
             {state.isLoading ? (
@@ -279,6 +372,9 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle eyebrow="Budget watch">Usage snapshot</CardTitle>
+            <Link to="/budgets" style={viewAllLinkStyle}>
+              View all &rarr;
+            </Link>
           </CardHeader>
           <CardContent>
             {state.isLoading ? (
@@ -330,9 +426,14 @@ export default function DashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle eyebrow="Alerts">Latest signals</CardTitle>
-          <span className="text-sm text-[#63736b]">
-            {state.alerts.length} total
-          </span>
+          <div style={{ display: "grid", justifyItems: "end", gap: "0.25rem" }}>
+            <span className="text-sm text-[#63736b]">
+              {state.alerts.length} total
+            </span>
+            <Link to="/alerts" style={viewAllLinkStyle}>
+              View all &rarr;
+            </Link>
+          </div>
         </CardHeader>
         <CardContent>
           {state.isLoading ? (
