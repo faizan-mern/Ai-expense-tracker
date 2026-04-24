@@ -32,6 +32,7 @@ export default function AiSettingsPage() {
   const { showToast } = useToast();
   const [settings, setSettings] = useState(initialSettings);
   const [models, setModels] = useState([]);
+  const [modelSearch, setModelSearch] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -119,10 +120,9 @@ export default function AiSettingsPage() {
       <header className="page-header">
         <div>
           <p className="eyebrow">AI Settings</p>
-          <h2>Control how the expense assistant parses text.</h2>
+          <h2>Configure your AI model and credentials.</h2>
           <p className="page-copy">
-            Save your provider key, choose a model, and tune the system prompt from one stable
-            place.
+            Set your provider key, pick a model, and tune the system prompt.
           </p>
         </div>
         <Badge variant="default">{formatModelLabel(settings.modelName || DEFAULT_MODEL)}</Badge>
@@ -135,8 +135,7 @@ export default function AiSettingsPage() {
         <CardContent>
           <div className="stack-group stack-group--compact">
             <p className="empty-state">
-              Settings are saved per signed-in user. If no personal key is saved, the backend falls
-              back to its local environment configuration.
+              Your key and model override the backend defaults for this account.
             </p>
             <div className="kv-grid">
               <div>
@@ -183,7 +182,7 @@ export default function AiSettingsPage() {
                   />
                 </label>
                 <p className="field-note">
-                  Keep the masked value to preserve the current key, or replace it to save a new one.
+                  Leave unchanged to keep the existing key.
                 </p>
               </div>
             </CardContent>
@@ -205,8 +204,19 @@ export default function AiSettingsPage() {
             </CardHeader>
             <CardContent>
               <div className="stack-form">
+                {models.length > 0 && (
+                  <label>
+                    Search models
+                    <input
+                      type="text"
+                      value={modelSearch}
+                      onChange={(event) => setModelSearch(event.target.value)}
+                      placeholder="Type to filter..."
+                    />
+                  </label>
+                )}
                 <label>
-                  Available models
+                  Active model
                   <select
                     value={settings.modelName}
                     onChange={(event) =>
@@ -214,17 +224,20 @@ export default function AiSettingsPage() {
                     }
                     disabled={isLoadingModels}
                   >
-                    {(models.length > 0 ? models : [settings.modelName || DEFAULT_MODEL]).map(
-                      (modelName) => (
-                        <option key={modelName} value={modelName}>
-                          {formatModelLabel(modelName)}
-                        </option>
-                      )
-                    )}
+                    {(models.length > 0
+                      ? models.filter((m) =>
+                          m.toLowerCase().includes(modelSearch.toLowerCase())
+                        )
+                      : [settings.modelName || DEFAULT_MODEL]
+                    ).map((modelName) => (
+                      <option key={modelName} value={modelName}>
+                        {formatModelLabel(modelName)}
+                      </option>
+                    ))}
                   </select>
                 </label>
                 <p className="field-note">
-                  The assistant page will use this saved model whenever it parses an expense.
+                  This model is used whenever the AI assistant parses an expense.
                 </p>
               </div>
             </CardContent>
@@ -248,7 +261,7 @@ export default function AiSettingsPage() {
                   />
                 </label>
                 <p className="field-note">
-                  These instructions are appended before the user text in the AI parsing flow.
+                  Prepended to every AI parsing request.
                 </p>
               </div>
             </CardContent>

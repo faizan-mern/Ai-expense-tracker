@@ -70,7 +70,7 @@ export function MetricCard({ eyebrow, value, description, className, ...props })
       <p className="m-0 text-[0.74rem] font-extrabold tracking-[0.14em] uppercase text-[#177b5a]">
         {eyebrow}
       </p>
-      <strong className="text-[clamp(1.55rem,1.2vw+1rem,2.15rem)] font-bold tracking-tight text-[#14211c]">
+      <strong className="text-[clamp(1.3rem,1.2vw+0.8rem,1.8rem)] font-bold tracking-tight text-[#14211c] min-w-0 wrap-break-word leading-tight">
         {value}
       </strong>
       <span className="text-sm text-[#63736b]">{description}</span>

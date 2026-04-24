@@ -105,7 +105,7 @@ export default function AlertsPage() {
           <p className="eyebrow">Alerts</p>
           <h2>Review the signals that need attention.</h2>
           <p className="page-copy">
-            Keep unread warnings visible and clear them once you have reviewed the spending pattern.
+            Budget and unusual-spend signals. Clear them once reviewed.
           </p>
         </div>
         <label className="inline-toggle">

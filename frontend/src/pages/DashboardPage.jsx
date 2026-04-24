@@ -117,8 +117,7 @@ export default function DashboardPage() {
           <p className="eyebrow">Dashboard</p>
           <h2>{formatMonthLabel(currentMonth)} at a glance.</h2>
           <p className="page-copy">
-            Review spend, budget pressure, and alert activity without bouncing
-            between modules.
+            Your spending, budget pressure, and alerts for the current month.
           </p>
         </div>
         <Badge variant="default">{formatMonthLabel(currentMonth)}</Badge>

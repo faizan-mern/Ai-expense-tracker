@@ -1,4 +1,11 @@
 import { AlertCircle, ArrowRight, Loader2, Settings2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { fetchAiSettings, parseExpenseWithAi } from "../api/aiApi";
+import { Button } from "../components/ui/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card";
+import { useToast } from "../components/ui/Toast";
+import { formatCurrency, formatDateLabel } from "../utils/formatters";
 
 function formatModelLabel(modelId) {
   if (!modelId) return modelId;
@@ -8,13 +15,6 @@ function formatModelLabel(modelId) {
   const model = modelId.slice(slashIdx + 1);
   return `${model}  (${provider.charAt(0).toUpperCase() + provider.slice(1)})`;
 }
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { fetchAiSettings, parseExpenseWithAi } from "../api/aiApi";
-import { Button } from "../components/ui/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card";
-import { useToast } from "../components/ui/Toast";
-import { formatCurrency, formatDateLabel } from "../utils/formatters";
 
 const samplePrompts = [
   "I spent 2400 on groceries today",
@@ -72,19 +72,17 @@ export default function AiAssistantPage() {
           <p className="eyebrow">AI Assistant</p>
           <h2>Turn plain language into a saved expense.</h2>
           <p className="page-copy">
-            Describe the amount, category, and timing naturally. The assistant parses it and saves
-            the expense using your current AI settings.
+            Describe an expense naturally — the assistant extracts the amount, category, and date, then saves it.
           </p>
         </div>
         <Link to="/settings">
           <Button variant="secondary" type="button">
             <Settings2 size={15} />
-            Open AI settings
+            AI Settings
           </Button>
         </Link>
       </header>
 
-      {/* Two-column: prompt on left, config+result stacked on right */}
       <div className="workspace-grid workspace-grid--assistant">
         {/* Left: prompt form */}
         <Card soft>
@@ -93,16 +91,13 @@ export default function AiAssistantPage() {
           </CardHeader>
           <CardContent>
             <form className="stack-form" onSubmit={handleSubmit}>
-              <label>
-                Expense description
-                <textarea
-                  rows="6"
-                  value={text}
-                  onChange={(event) => setText(event.target.value)}
-                  placeholder="I spent 500 on food today"
-                  required
-                />
-              </label>
+              <textarea
+                rows="4"
+                value={text}
+                onChange={(event) => setText(event.target.value)}
+                placeholder="I spent 500 on food today"
+                required
+              />
 
               <div className="sample-prompt-row">
                 {samplePrompts.map((prompt) => (
@@ -136,8 +131,8 @@ export default function AiAssistantPage() {
           </CardContent>
         </Card>
 
-        {/* Right column: config + result stacked */}
-        <div className="stack-group">
+        {/* Right column: config + result — flex column so result fills remaining height */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
           {/* Active AI configuration */}
           <Card>
             <CardHeader>
@@ -162,7 +157,7 @@ export default function AiAssistantPage() {
                     </div>
                     <div>
                       <span className="kv-label">API key</span>
-                      <strong>{config.apiKey ? "Configured" : "Using backend fallback or none"}</strong>
+                      <strong>{config.apiKey ? "Configured" : "Using backend fallback"}</strong>
                     </div>
                   </div>
                   <div className="prompt-preview">
@@ -174,15 +169,15 @@ export default function AiAssistantPage() {
             </CardContent>
           </Card>
 
-          {/* Result */}
-          <Card>
+          {/* Result — grows to fill remaining column height */}
+          <Card style={{ flex: 1 }}>
             <CardHeader>
-              <CardTitle eyebrow="Result">Expense created</CardTitle>
+              <CardTitle eyebrow="Created expense">Result</CardTitle>
             </CardHeader>
             <CardContent>
               {!result ? (
                 <p className="empty-state">
-                  Submit a sentence and the saved expense will appear here.
+                  Submit a description and the saved expense will appear here.
                 </p>
               ) : (
                 <ul className="data-list">

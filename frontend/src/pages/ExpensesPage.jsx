@@ -160,7 +160,7 @@ export default function ExpensesPage() {
         <div>
           <p className="eyebrow">Expenses</p>
           <h2>Capture every spend with less friction.</h2>
-          <p className="page-copy">Add transactions, keep categories tidy, and review your ledger.</p>
+          <p className="page-copy">Log, edit, and filter transactions. Manage your categories here too.</p>
         </div>
         <Badge variant="default">{expenses.length} entries</Badge>
       </header>

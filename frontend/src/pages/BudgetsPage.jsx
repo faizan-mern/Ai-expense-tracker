@@ -130,7 +130,7 @@ export default function BudgetsPage() {
           <p className="eyebrow">Budgets</p>
           <h2>Plan {formatMonthLabel(selectedMonth)} with live usage.</h2>
           <p className="page-copy">
-            Choose a month first, then review the totals, overall cap, and category budgets in one place.
+            Monthly limits, category caps, and live usage in one view.
           </p>
         </div>
       </header>
@@ -260,7 +260,7 @@ export default function BudgetsPage() {
               </article>
             ) : (
               <p className="empty-state">
-                No overall budget exists for this month yet. Add one to unlock a usage benchmark.
+                No monthly cap yet. Add one to track overall usage.
               </p>
             )}
           </CardContent>

@@ -712,6 +712,12 @@ tbody tr:nth-child(even) {
   flex-wrap: wrap;
 }
 
+.budget-card__meta > span {
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
 .budget-card__header > div,
 .budget-card__meta > div {
   display: grid;
