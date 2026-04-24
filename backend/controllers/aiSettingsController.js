@@ -3,15 +3,19 @@ const pool = require("../db");
 const DEFAULT_MODEL = "openai/gpt-4o-mini";
 const DEFAULT_BASE_URL = process.env.AI_BASE_URL || "https://openrouter.ai/api/v1";
 const MASKED_API_KEY = "********";
-const FALLBACK_MODELS = [
-  DEFAULT_MODEL,
+// Confirmed working models with OpenRouter + LangChain structured output
+const AVAILABLE_MODELS = [
+  "openai/gpt-4o-mini",
+  "openai/gpt-4o",
+  "anthropic/claude-3.5-haiku",
   "anthropic/claude-3.5-sonnet",
-  "google/gemini-1.5-flash",
+  "google/gemini-2.0-flash-exp:free",
+  "google/gemini-2.5-flash-preview:free",
+  "deepseek/deepseek-chat:free",
+  "mistralai/mistral-small",
+  "nvidia/llama-3.1-nemotron-70b-instruct:free",
+  "nvidia/llama-3.3-nemotron-super-49b-v1:free",
 ];
-
-function normalizeBaseUrl(baseURL) {
-  return String(baseURL || "").trim().replace(/\/+$/, "");
-}
 
 function normalizeOptionalString(value) {
   if (value === undefined || value === null) {
@@ -19,18 +23,6 @@ function normalizeOptionalString(value) {
   }
 
   return String(value).trim();
-}
-
-function buildModelsEndpoint(baseURL) {
-  const normalizedBaseURL = normalizeBaseUrl(baseURL);
-
-  if (!normalizedBaseURL) {
-    return "";
-  }
-
-  return normalizedBaseURL.endsWith("/v1")
-    ? `${normalizedBaseURL}/models`
-    : `${normalizedBaseURL}/v1/models`;
 }
 
 function serializeSettings(row = {}) {
@@ -117,53 +109,11 @@ async function saveAiSettings(req, res) {
   }
 }
 
-async function getAvailableModels(req, res) {
-  try {
-    const result = await pool.query(
-      `SELECT api_key
-       FROM ai_settings
-       WHERE user_id = $1`,
-      [req.user.userId]
-    );
-
-    const apiKey = result.rows[0]?.api_key || process.env.AI_API_KEY || "";
-    const endpoint = buildModelsEndpoint(DEFAULT_BASE_URL);
-
-    if (!apiKey) {
-      return res.json({
-        success: true,
-        models: FALLBACK_MODELS,
-      });
-    }
-
-    const response = await fetch(endpoint, {
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Model request failed with status ${response.status}`);
-    }
-
-    const payload = await response.json();
-    const models = Array.isArray(payload?.data)
-      ? payload.data
-          .map((entry) => entry?.id)
-          .filter(Boolean)
-          .sort((left, right) => left.localeCompare(right))
-      : [];
-
-    return res.json({
-      success: true,
-      models: models.length > 0 ? models : FALLBACK_MODELS,
-    });
-  } catch (error) {
-    return res.status(502).json({
-      success: false,
-      message: "Failed to fetch available models",
-    });
-  }
+function getAvailableModels(req, res) {
+  return res.json({
+    success: true,
+    models: AVAILABLE_MODELS,
+  });
 }
 
 module.exports = {

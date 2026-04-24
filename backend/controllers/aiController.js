@@ -59,9 +59,18 @@ async function parseExpense(req, res) {
       });
     }
 
+    const errorMsg = (resolvedError.message || "").toLowerCase();
+    const isCompatibilityError =
+      errorMsg.includes("tool") ||
+      errorMsg.includes("function call") ||
+      errorMsg.includes("not support") ||
+      errorMsg.includes("unsupported");
+
     return res.status(500).json({
       success: false,
-      message: "Failed to process AI expense request",
+      message: isCompatibilityError
+        ? "This model does not support AI parsing. Go to AI Settings and select a different model."
+        : "Failed to process AI expense request",
       error: resolvedError.message || "Unknown AI error",
     });
   }
