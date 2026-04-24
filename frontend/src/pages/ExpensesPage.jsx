@@ -159,8 +159,10 @@ export default function ExpensesPage() {
       <header className="page-header">
         <div>
           <p className="eyebrow">Expenses</p>
-          <h2>Capture every spend with less friction.</h2>
-          <p className="page-copy">Log, edit, and filter transactions. Manage your categories here too.</p>
+          <h2>Expense records</h2>
+          <p className="page-copy">
+            Add entries, update the ledger, and manage your categories in one place.
+          </p>
         </div>
         <Badge variant="default">{expenses.length} entries</Badge>
       </header>
@@ -173,9 +175,9 @@ export default function ExpensesPage() {
       ) : null}
 
       <div className="metric-grid metric-grid--3col">
-        <MetricCard eyebrow="Filtered spend" value={formatCurrency(totalFilteredSpend)} description="Across visible entries" />
-        <MetricCard eyebrow="Visible entries" value={expenses.length} description="Records in current view" />
-        <MetricCard eyebrow="Categories" value={categories.length} description={`${customCategories.length} custom`} />
+        <MetricCard eyebrow="Filtered spend" value={formatCurrency(totalFilteredSpend)} description="Total in the current result set" />
+        <MetricCard eyebrow="Visible entries" value={expenses.length} description="Shown in the current table" />
+        <MetricCard eyebrow="Categories" value={categories.length} description={`${customCategories.length} custom categories`} />
       </div>
 
       {/* Expense form + Category manager side by side */}

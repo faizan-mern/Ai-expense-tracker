@@ -39,10 +39,9 @@ export default function LoginPage() {
     <div className="auth-shell">
       <div className="auth-panel">
         <p className="eyebrow">Welcome back</p>
-        <h1>Sign in to your expense workspace.</h1>
+        <h1>Sign in</h1>
         <p className="auth-copy">
-          Review spending, watch your budgets, and use AI to turn plain language
-          into clean expense records.
+          Access your expenses, budgets, alerts, and AI tools.
         </p>
 
         <form className="auth-form" onSubmit={handleSubmit}>

@@ -13,7 +13,7 @@ function formatModelLabel(modelId) {
   if (slashIdx === -1) return modelId;
   const provider = modelId.slice(0, slashIdx);
   const model = modelId.slice(slashIdx + 1);
-  return `${model}  (${provider.charAt(0).toUpperCase() + provider.slice(1)})`;
+  return `${model} (${provider.charAt(0).toUpperCase() + provider.slice(1)})`;
 }
 
 const samplePrompts = [
@@ -37,14 +37,21 @@ export default function AiAssistantPage() {
     async function loadSettings() {
       try {
         const response = await fetchAiSettings();
-        if (!isCancelled) setConfig(response.settings || null);
+        if (!isCancelled) {
+          setConfig(response.settings || null);
+        }
       } catch (loadError) {
-        if (!isCancelled) setConfigError(loadError.message);
+        if (!isCancelled) {
+          setConfigError(loadError.message);
+        }
       }
     }
 
     loadSettings();
-    return () => { isCancelled = true; };
+
+    return () => {
+      isCancelled = true;
+    };
   }, []);
 
   async function handleSubmit(event) {
@@ -70,9 +77,10 @@ export default function AiAssistantPage() {
       <header className="page-header">
         <div>
           <p className="eyebrow">AI Assistant</p>
-          <h2>Turn plain language into a saved expense.</h2>
+          <h2>Create an expense from a message</h2>
           <p className="page-copy">
-            Describe an expense naturally — the assistant extracts the amount, category, and date, then saves it.
+            Describe a purchase in plain language and save it as a structured
+            expense entry.
           </p>
         </div>
         <Link to="/settings">
@@ -84,15 +92,14 @@ export default function AiAssistantPage() {
       </header>
 
       <div className="workspace-grid workspace-grid--assistant">
-        {/* Left: prompt form */}
         <Card soft>
           <CardHeader>
-            <CardTitle eyebrow="Prompt">Describe an expense</CardTitle>
+            <CardTitle eyebrow="Input">Describe an expense</CardTitle>
           </CardHeader>
           <CardContent>
             <form className="stack-form" onSubmit={handleSubmit}>
               <textarea
-                rows="4"
+                rows="5"
                 value={text}
                 onChange={(event) => setText(event.target.value)}
                 placeholder="I spent 500 on food today"
@@ -125,18 +132,16 @@ export default function AiAssistantPage() {
                 ) : (
                   <ArrowRight size={15} />
                 )}
-                {isSubmitting ? "Parsing with AI..." : "Create expense with AI"}
+                {isSubmitting ? "Creating expense..." : "Create expense"}
               </Button>
             </form>
           </CardContent>
         </Card>
 
-        {/* Right column: config + result — flex column so result fills remaining height */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
-          {/* Active AI configuration */}
+        <div className="detail-column">
           <Card>
             <CardHeader>
-              <CardTitle eyebrow="Current setup">Active AI configuration</CardTitle>
+              <CardTitle eyebrow="Parser status">Current setup</CardTitle>
             </CardHeader>
             <CardContent>
               {configError ? (
@@ -152,12 +157,15 @@ export default function AiAssistantPage() {
                     <div>
                       <span className="kv-label">Model</span>
                       <strong>
-                        {formatModelLabel(config.modelName || config.model) || "Default backend model"}
+                        {formatModelLabel(config.modelName || config.model) ||
+                          "Default backend model"}
                       </strong>
                     </div>
                     <div>
                       <span className="kv-label">API key</span>
-                      <strong>{config.apiKey ? "Configured" : "Using backend fallback"}</strong>
+                      <strong>
+                        {config.apiKey ? "Configured" : "Using backend default"}
+                      </strong>
                     </div>
                   </div>
                   <div className="prompt-preview">
@@ -169,15 +177,14 @@ export default function AiAssistantPage() {
             </CardContent>
           </Card>
 
-          {/* Result — grows to fill remaining column height */}
-          <Card style={{ flex: 1 }}>
+          <Card>
             <CardHeader>
-              <CardTitle eyebrow="Created expense">Result</CardTitle>
+              <CardTitle eyebrow="Saved entry">Result</CardTitle>
             </CardHeader>
             <CardContent>
               {!result ? (
                 <p className="empty-state">
-                  Submit a description and the saved expense will appear here.
+                  The saved expense will appear here after submission.
                 </p>
               ) : (
                 <ul className="data-list">
@@ -202,7 +209,7 @@ export default function AiAssistantPage() {
                   <li>
                     <div>
                       <span className="kv-label">Note</span>
-                      <strong>{result.expense.note || "—"}</strong>
+                      <strong>{result.expense.note || "None"}</strong>
                     </div>
                   </li>
                 </ul>

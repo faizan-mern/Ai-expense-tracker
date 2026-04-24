@@ -103,9 +103,9 @@ export default function AlertsPage() {
       <header className="page-header">
         <div>
           <p className="eyebrow">Alerts</p>
-          <h2>Review the signals that need attention.</h2>
+          <h2>Alerts and exceptions</h2>
           <p className="page-copy">
-            Budget and unusual-spend signals. Clear them once reviewed.
+            Review budget thresholds and unusual spending activity.
           </p>
         </div>
         <label className="inline-toggle">

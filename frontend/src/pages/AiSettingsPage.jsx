@@ -1,6 +1,10 @@
 import { AlertCircle, RefreshCw, Save } from "lucide-react";
 import { useEffect, useState } from "react";
-import { fetchAiSettings, saveAiSettings } from "../api/aiApi";
+import {
+  fetchAiSettings,
+  fetchAvailableModels,
+  saveAiSettings,
+} from "../api/aiApi";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card";
@@ -8,35 +12,14 @@ import { useToast } from "../components/ui/Toast";
 
 const DEFAULT_MODEL = "openai/gpt-4o-mini";
 
-// Confirmed working models with OpenRouter + LangChain structured output
-const AVAILABLE_MODELS = [
-  "openai/gpt-4o-mini",
-  "openai/gpt-4o",
-  "anthropic/claude-3.5-haiku",
-  "anthropic/claude-3.5-sonnet",
-  "google/gemini-2.0-flash-exp:free",
-  "google/gemini-2.5-flash-preview:free",
-  "deepseek/deepseek-chat:free",
-  "mistralai/mistral-small",
-  "nvidia/llama-3.1-nemotron-70b-instruct:free",
-  "nvidia/llama-3.3-nemotron-super-49b-v1:free",
-];
-
-function parseModelId(modelId) {
-  const slashIdx = modelId.indexOf("/");
-  if (slashIdx === -1) return { model: modelId, providerLabel: "" };
-  const provider = modelId.slice(0, slashIdx);
-  return {
-    model: modelId.slice(slashIdx + 1),
-    providerLabel: provider.charAt(0).toUpperCase() + provider.slice(1),
-  };
-}
-
 function formatModelLabel(modelId) {
   if (!modelId) return modelId;
-  const { model, providerLabel } = parseModelId(modelId);
-  if (!providerLabel) return model;
-  return `${model}  —  ${providerLabel}`;
+  const slashIdx = modelId.indexOf("/");
+  if (slashIdx === -1) return modelId;
+  const provider = modelId.slice(0, slashIdx);
+  const model = modelId.slice(slashIdx + 1);
+  const providerLabel = provider.charAt(0).toUpperCase() + provider.slice(1);
+  return `${model} - ${providerLabel}`;
 }
 
 const initialSettings = {
@@ -49,24 +32,43 @@ const initialSettings = {
 export default function AiSettingsPage() {
   const { showToast } = useToast();
   const [settings, setSettings] = useState(initialSettings);
+  const [models, setModels] = useState([]);
   const [modelSearch, setModelSearch] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
 
   useEffect(() => {
     let isCancelled = false;
 
-    async function loadSettings() {
+    async function loadPageData() {
       try {
-        const response = await fetchAiSettings();
+        const [settingsResult, modelsResult] = await Promise.allSettled([
+          fetchAiSettings(),
+          fetchAvailableModels(),
+        ]);
+
         if (!isCancelled) {
-          setSettings({
-            apiKey: response.settings.apiKey || "",
-            modelName: response.settings.modelName || response.settings.model || DEFAULT_MODEL,
-            systemPrompt: response.settings.systemPrompt || "",
-            baseURL: response.settings.baseURL || "",
-          });
+          if (settingsResult.status === "fulfilled") {
+            setSettings({
+              apiKey: settingsResult.value.settings.apiKey || "",
+              modelName:
+                settingsResult.value.settings.modelName ||
+                settingsResult.value.settings.model ||
+                DEFAULT_MODEL,
+              systemPrompt: settingsResult.value.settings.systemPrompt || "",
+              baseURL: settingsResult.value.settings.baseURL || "",
+            });
+          } else {
+            setError(settingsResult.reason.message);
+            showToast(settingsResult.reason.message, "error");
+          }
+
+          if (modelsResult.status === "fulfilled") {
+            setModels(modelsResult.value.models || []);
+          }
+
           setIsLoading(false);
         }
       } catch (loadError) {
@@ -78,9 +80,28 @@ export default function AiSettingsPage() {
       }
     }
 
-    loadSettings();
-    return () => { isCancelled = true; };
+    loadPageData();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [showToast]);
+
+  async function handleLoadModels() {
+    setError("");
+    setIsLoadingModels(true);
+
+    try {
+      const response = await fetchAvailableModels();
+      setModels(response.models || []);
+      showToast("Available models loaded", "success");
+    } catch (loadError) {
+      setError(loadError.message);
+      showToast(loadError.message, "error");
+    } finally {
+      setIsLoadingModels(false);
+    }
+  }
 
   async function handleSaveSettings(event) {
     event.preventDefault();
@@ -97,7 +118,10 @@ export default function AiSettingsPage() {
       setSettings((current) => ({
         ...current,
         apiKey: response.settings.apiKey || "",
-        modelName: response.settings.modelName || response.settings.model || current.modelName,
+        modelName:
+          response.settings.modelName ||
+          response.settings.model ||
+          current.modelName,
         systemPrompt: response.settings.systemPrompt || "",
         baseURL: response.settings.baseURL || current.baseURL,
       }));
@@ -110,31 +134,36 @@ export default function AiSettingsPage() {
     }
   }
 
-  const filteredModels = AVAILABLE_MODELS.filter((m) =>
-    m.toLowerCase().includes(modelSearch.toLowerCase())
-  );
+  const visibleModels =
+    models.length > 0
+      ? models.filter((model) =>
+          model.toLowerCase().includes(modelSearch.toLowerCase())
+        )
+      : [settings.modelName || DEFAULT_MODEL];
 
   return (
     <section className="page">
       <header className="page-header">
         <div>
           <p className="eyebrow">AI Settings</p>
-          <h2>Configure your AI model and credentials.</h2>
+          <h2>AI parser settings</h2>
           <p className="page-copy">
-            Set your provider key, pick a model, and tune the system prompt.
+            Manage your provider key, active model, and parsing instructions.
           </p>
         </div>
-        <Badge variant="default">{formatModelLabel(settings.modelName || DEFAULT_MODEL)}</Badge>
+        <Badge variant="default">
+          {formatModelLabel(settings.modelName || DEFAULT_MODEL)}
+        </Badge>
       </header>
 
       <Card soft>
         <CardHeader>
-          <CardTitle eyebrow="Provider">Current connection</CardTitle>
+          <CardTitle eyebrow="Connection">Current provider</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="stack-group stack-group--compact">
             <p className="empty-state">
-              Your key and model override the backend defaults for this account.
+              Personal settings override the backend defaults for this account.
             </p>
             <div className="kv-grid">
               <div>
@@ -143,7 +172,7 @@ export default function AiSettingsPage() {
               </div>
               <div>
                 <span className="kv-label">Saved key</span>
-                <strong>{settings.apiKey ? "Configured" : "Using backend fallback or none"}</strong>
+                <strong>{settings.apiKey ? "Configured" : "No personal key saved"}</strong>
               </div>
             </div>
           </div>
@@ -165,7 +194,7 @@ export default function AiSettingsPage() {
         <form className="stack-group" onSubmit={handleSaveSettings}>
           <Card soft>
             <CardHeader>
-              <CardTitle eyebrow="Credentials">Provider access</CardTitle>
+              <CardTitle eyebrow="Credentials">Access</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="stack-form">
@@ -175,13 +204,16 @@ export default function AiSettingsPage() {
                     type="password"
                     value={settings.apiKey}
                     onChange={(event) =>
-                      setSettings((current) => ({ ...current, apiKey: event.target.value }))
+                      setSettings((current) => ({
+                        ...current,
+                        apiKey: event.target.value,
+                      }))
                     }
                     placeholder="sk-or-v1-..."
                   />
                 </label>
                 <p className="field-note">
-                  Leave unchanged to keep the existing key.
+                  Leave this unchanged if you want to keep the current key.
                 </p>
               </div>
             </CardContent>
@@ -189,74 +221,63 @@ export default function AiSettingsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle eyebrow="Model">Choose the parser model</CardTitle>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setSettings((current) => ({ ...current, modelName: DEFAULT_MODEL }));
-                  setModelSearch("");
-                }}
-              >
-                Reset to default
-              </Button>
+              <CardTitle eyebrow="Model">Active model</CardTitle>
+              <div className="button-row">
+                <Badge variant="muted">
+                  {models.length > 0 ? `${visibleModels.length} models` : "Saved model"}
+                </Badge>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleLoadModels}
+                  disabled={isLoadingModels}
+                >
+                  <RefreshCw size={14} className={isLoadingModels ? "spin" : ""} />
+                  {isLoadingModels ? "Loading..." : "Refresh"}
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="stack-form">
-                <label>
-                  Search
-                  <input
-                    type="text"
-                    value={modelSearch}
-                    onChange={(event) => setModelSearch(event.target.value)}
-                    placeholder="Filter models..."
-                  />
-                </label>
-
-                {filteredModels.length > 0 ? (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                    {filteredModels.map((modelName) => {
-                      const isSelected = settings.modelName === modelName;
-                      const { model, providerLabel } = parseModelId(modelName);
-                      return (
-                        <button
-                          key={modelName}
-                          type="button"
-                          onClick={() =>
-                            setSettings((current) => ({ ...current, modelName }))
-                          }
-                          className={`model-chip${isSelected ? " model-chip--selected" : ""}`}
-                        >
-                          <strong
-                            style={{
-                              fontSize: "0.82rem",
-                              fontWeight: 700,
-                              color: isSelected ? "var(--accent-dark)" : "var(--text)",
-                              lineHeight: 1.3,
-                            }}
-                          >
-                            {model}
-                          </strong>
-                          <span
-                            style={{
-                              fontSize: "0.72rem",
-                              color: "var(--muted)",
-                              lineHeight: 1.3,
-                            }}
-                          >
-                            {providerLabel}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
+                {models.length > 0 ? (
+                  <label>
+                    Search models
+                    <input
+                      type="text"
+                      value={modelSearch}
+                      onChange={(event) => setModelSearch(event.target.value)}
+                      placeholder="Filter the available list"
+                    />
+                  </label>
                 ) : (
-                  <p className="empty-state">No models match your search.</p>
+                  <p className="field-note">
+                    The saved model is shown below. Use refresh to retry loading
+                    the full provider list.
+                  </p>
                 )}
-
+                <label>
+                  Model
+                  <select
+                    value={settings.modelName}
+                    onChange={(event) =>
+                      setSettings((current) => ({
+                        ...current,
+                        modelName: event.target.value,
+                      }))
+                    }
+                    disabled={isLoadingModels}
+                  >
+                    {visibleModels.map((modelName) => (
+                      <option key={modelName} value={modelName}>
+                        {formatModelLabel(modelName)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <p className="field-note">
-                  All listed models are verified to work with the AI parsing flow.
+                  All available models are loaded on entry when the provider
+                  endpoint responds successfully.
                 </p>
               </div>
             </CardContent>
@@ -264,23 +285,26 @@ export default function AiSettingsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle eyebrow="Prompt">System instructions</CardTitle>
+              <CardTitle eyebrow="Instructions">System prompt</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="stack-form">
                 <label>
-                  System prompt
+                  Prompt
                   <textarea
                     rows="7"
                     value={settings.systemPrompt}
                     onChange={(event) =>
-                      setSettings((current) => ({ ...current, systemPrompt: event.target.value }))
+                      setSettings((current) => ({
+                        ...current,
+                        systemPrompt: event.target.value,
+                      }))
                     }
-                    placeholder="Example: Prefer Food for groceries, keep notes short, and always use PK time context."
+                    placeholder="Example: Keep notes short and prefer PK time context."
                   />
                 </label>
                 <p className="field-note">
-                  Prepended to every AI parsing request.
+                  Added to each parsing request before the user message.
                 </p>
               </div>
             </CardContent>
@@ -289,7 +313,7 @@ export default function AiSettingsPage() {
           <div className="page-actions">
             <Button type="submit" variant="primary" disabled={isSaving}>
               {isSaving ? <RefreshCw className="spin" size={15} /> : <Save size={15} />}
-              {isSaving ? "Saving settings..." : "Save AI settings"}
+              {isSaving ? "Saving settings..." : "Save settings"}
             </Button>
           </div>
         </form>

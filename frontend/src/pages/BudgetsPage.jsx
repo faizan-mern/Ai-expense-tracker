@@ -128,9 +128,9 @@ export default function BudgetsPage() {
       <header className="page-header">
         <div>
           <p className="eyebrow">Budgets</p>
-          <h2>Plan {formatMonthLabel(selectedMonth)} with live usage.</h2>
+          <h2>Budget plan</h2>
           <p className="page-copy">
-            Monthly limits, category caps, and live usage in one view.
+            Track monthly limits and category budgets in one place.
           </p>
         </div>
       </header>

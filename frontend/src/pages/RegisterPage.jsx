@@ -43,9 +43,9 @@ export default function RegisterPage() {
     <div className="auth-shell">
       <div className="auth-panel">
         <p className="eyebrow">Create account</p>
-        <h1>Start tracking with a cleaner system.</h1>
+        <h1>Create your account</h1>
         <p className="auth-copy">
-          Set up your account to manage expenses, budgets, alerts, and AI-assisted entries.
+          Start with a secure workspace for expenses, budgets, alerts, and AI-assisted entry.
         </p>
 
         <form className="auth-form" onSubmit={handleSubmit}>
