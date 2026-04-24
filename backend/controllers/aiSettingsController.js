@@ -6,15 +6,13 @@ const MASKED_API_KEY = "********";
 // Confirmed working models with OpenRouter + LangChain structured output
 const AVAILABLE_MODELS = [
   "openai/gpt-4o-mini",
-  "openai/gpt-4o",
   "anthropic/claude-3.5-haiku",
-  "anthropic/claude-3.5-sonnet",
-  "google/gemini-2.0-flash-exp:free",
-  "google/gemini-2.5-flash-preview:free",
-  "deepseek/deepseek-chat:free",
-  "mistralai/mistral-small",
-  "nvidia/llama-3.1-nemotron-70b-instruct:free",
-  "nvidia/llama-3.3-nemotron-super-49b-v1:free",
+  "inclusionai/ling-2.6-1t:free",
+  "inclusionai/ling-2.6-flash:free",
+  "nvidia/nemotron-3-super-120b-a12b:free",
+  "nvidia/nemotron-3-nano-30b-a3b:free",
+  "nvidia/nemotron-nano-9b-v2:free",
+  "nvidia/nemotron-nano-12b-v2-vl:free",
 ];
 
 function normalizeOptionalString(value) {

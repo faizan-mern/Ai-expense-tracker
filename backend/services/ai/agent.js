@@ -46,6 +46,79 @@ function buildCategoryPrompt(categories) {
   return categories.map((category) => `${category.id}: ${category.name}`).join("\n");
 }
 
+function shouldTryJsonFallback(error) {
+  const message = String(error?.message || "").toLowerCase();
+
+  return (
+    message.includes("not valid json") ||
+    message.includes("unexpected token") ||
+    message.includes("tool") ||
+    message.includes("function call") ||
+    message.includes("unsupported")
+  );
+}
+
+function extractTextFromResponseContent(content) {
+  if (!content) {
+    return "";
+  }
+
+  if (typeof content === "string") {
+    return content;
+  }
+
+  if (Array.isArray(content)) {
+    return content
+      .map((part) => {
+        if (typeof part === "string") {
+          return part;
+        }
+
+        if (part && typeof part.text === "string") {
+          return part.text;
+        }
+
+        return "";
+      })
+      .join("\n");
+  }
+
+  return String(content);
+}
+
+function parseJsonObjectFromText(text) {
+  const trimmed = String(text || "").trim();
+
+  if (!trimmed) {
+    throw new Error("Model returned empty content");
+  }
+
+  try {
+    return JSON.parse(trimmed);
+  } catch (error) {
+    // keep trying below
+  }
+
+  const fencedMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fencedMatch && fencedMatch[1]) {
+    const fencedText = fencedMatch[1].trim();
+    try {
+      return JSON.parse(fencedText);
+    } catch (error) {
+      // keep trying below
+    }
+  }
+
+  const firstBraceIndex = trimmed.indexOf("{");
+  const lastBraceIndex = trimmed.lastIndexOf("}");
+  if (firstBraceIndex >= 0 && lastBraceIndex > firstBraceIndex) {
+    const objectSlice = trimmed.slice(firstBraceIndex, lastBraceIndex + 1);
+    return JSON.parse(objectSlice);
+  }
+
+  throw new Error("Could not parse JSON object from model output");
+}
+
 async function parseExpenseTextWithAi({ userId, text }) {
   const { apiKey, model, baseURL, systemPrompt } = await getAiConfig(userId);
   const categories = await listAccessibleCategories(userId);
@@ -60,10 +133,9 @@ async function parseExpenseTextWithAi({ userId, text }) {
     apiKey,
     model,
     temperature: 0,
+    maxTokens: 180,
     maxRetries: 2,
     configuration: baseURL ? { baseURL } : undefined,
-  }).withStructuredOutput(expenseExtractionSchema, {
-    name: "expense_extraction",
   });
 
   const promptParts =[
@@ -92,7 +164,32 @@ async function parseExpenseTextWithAi({ userId, text }) {
 
   const prompt = promptParts.join("\n");
 
-  return llm.invoke(prompt);
+  const structuredLlm = llm.withStructuredOutput(expenseExtractionSchema, {
+    name: "expense_extraction",
+  });
+
+  try {
+    return await structuredLlm.invoke(prompt);
+  } catch (error) {
+    if (!shouldTryJsonFallback(error)) {
+      throw error;
+    }
+
+    const fallbackPrompt = [
+      prompt,
+      "",
+      "Return only one JSON object.",
+      "Do not include markdown or any text before or after JSON.",
+      'Use exactly these keys: "amount", "categoryId", "expenseDate", "note".',
+      'note must be either a string or null.',
+    ].join("\n");
+
+    const rawResponse = await llm.invoke(fallbackPrompt);
+    const rawText = extractTextFromResponseContent(rawResponse?.content);
+    const parsedJson = parseJsonObjectFromText(rawText);
+
+    return expenseExtractionSchema.parse(parsedJson);
+  }
 }
 
 module.exports = {
