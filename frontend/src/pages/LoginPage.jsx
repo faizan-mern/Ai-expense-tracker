@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
   const[error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -63,10 +64,10 @@ export default function LoginPage() {
 
           <label>
             Password
-            <div className="input-wrapper">
+            <div className="input-wrapper input-wrapper--with-action">
               <Lock className="input-icon" />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 value={form.password}
                 autoComplete="current-password"
                 onChange={(event) =>
@@ -74,6 +75,14 @@ export default function LoginPage() {
                 }
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((current) => !current)}
+                className="input-action-button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
             </div>
           </label>
 

@@ -61,9 +61,18 @@ async function createExpenseForUser({ userId, amount, categoryId, expenseDate, n
     [userId, category.id, amount, expenseDate, normalizeNote(note)]
   );
 
-  const savedExpense = await findExpenseById(insertResult.rows[0].id, userId);
+  let savedExpense = null;
 
-  await evaluateAlertsForExpense(savedExpense);
+  try {
+    savedExpense = await findExpenseById(insertResult.rows[0].id, userId);
+    await evaluateAlertsForExpense(savedExpense);
+  } catch (alertError) {
+    if (!savedExpense) {
+      throw alertError;
+    }
+
+    // Alert evaluation should not block successful expense creation.
+  }
 
   return savedExpense;
 }
@@ -105,6 +114,11 @@ async function updateExpenseForUser({
   );
 
   const updatedExpense = await findExpenseById(expenseId, userId);
+  try {
+    await evaluateAlertsForExpense(updatedExpense);
+  } catch (alertError) {
+    // Alert evaluation should not block successful expense update.
+  }
 
   return updatedExpense;
 }

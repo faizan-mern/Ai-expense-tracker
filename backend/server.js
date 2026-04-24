@@ -26,6 +26,7 @@ const alertRoutes = require("./routes/alertRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 
 const app = express();
+app.set("trust proxy", 1);
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
