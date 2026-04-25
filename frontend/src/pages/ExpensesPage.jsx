@@ -1,5 +1,6 @@
 import { AlertCircle, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { createCategory, fetchCategories } from "../api/categoryApi";
 import {
   createExpense,
@@ -9,7 +10,7 @@ import {
 } from "../api/expenseApi";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
-import { Card, CardContent, CardHeader, CardTitle, MetricCard } from "../components/ui/Card";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card";
 import { ConfirmModal } from "../components/ui/ConfirmModal";
 import { Pagination } from "../components/ui/Pagination";
 import { useToast } from "../components/ui/Toast";
@@ -35,6 +36,7 @@ const initialFilters = { categoryId: "", startDate: "", endDate: "" };
 
 export default function ExpensesPage() {
   const { showToast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [categories, setCategories] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [expenseForm, setExpenseForm] = useState(createInitialExpenseForm);
@@ -44,8 +46,11 @@ export default function ExpensesPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [highlightedExpenseId, setHighlightedExpenseId] = useState(null);
   const [showFilterBar, setShowFilterBar] = useState(false);
+  const [showDefaultCategories, setShowDefaultCategories] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(null);
+  const highlightTimeoutRef = useRef(null);
 
   async function loadExpenses(activeFilters = filters) {
     const response = await fetchExpenses(activeFilters);
@@ -155,14 +160,63 @@ export default function ExpensesPage() {
   }
 
   const hasActiveFilter = filters.categoryId || filters.startDate || filters.endDate;
+  const focusedExpenseId = Number(searchParams.get("focusExpenseId"));
   const totalPages = Math.ceil(expenses.length / ITEMS_PER_PAGE);
   const paginatedExpenses = expenses.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
-  const totalFilteredSpend = expenses.reduce((s, e) => s + Number(e.amount), 0);
   const defaultCategories = categories.filter((c) => c.isDefault);
   const customCategories = categories.filter((c) => !c.isDefault);
+
+  useEffect(() => {
+    if (!Number.isFinite(focusedExpenseId) || focusedExpenseId <= 0 || expenses.length === 0) {
+      return;
+    }
+
+    const expenseIndex = expenses.findIndex((expense) => Number(expense.id) === focusedExpenseId);
+    if (expenseIndex === -1) {
+      return;
+    }
+
+    const targetPage = Math.floor(expenseIndex / ITEMS_PER_PAGE) + 1;
+    setCurrentPage(targetPage);
+    setHighlightedExpenseId(focusedExpenseId);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete("focusExpenseId");
+      return next;
+    }, { replace: true });
+
+    if (highlightTimeoutRef.current) {
+      clearTimeout(highlightTimeoutRef.current);
+    }
+    highlightTimeoutRef.current = setTimeout(() => {
+      setHighlightedExpenseId(null);
+    }, 2600);
+  }, [expenses, focusedExpenseId, setSearchParams]);
+
+  useEffect(() => {
+    if (!highlightedExpenseId) {
+      return;
+    }
+
+    const hasHighlightedOnPage = paginatedExpenses.some(
+      (expense) => Number(expense.id) === Number(highlightedExpenseId)
+    );
+    if (!hasHighlightedOnPage) {
+      return;
+    }
+
+    const rowEl = document.getElementById(`expense-row-${highlightedExpenseId}`);
+    rowEl?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [highlightedExpenseId, paginatedExpenses, currentPage]);
+
+  useEffect(() => () => {
+    if (highlightTimeoutRef.current) {
+      clearTimeout(highlightTimeoutRef.current);
+    }
+  }, []);
 
   return (
     <section className="page">
@@ -183,12 +237,6 @@ export default function ExpensesPage() {
           <p>{error}</p>
         </div>
       ) : null}
-
-      <div className="metric-grid metric-grid--3col">
-        <MetricCard eyebrow="Filtered spend" value={formatCurrency(totalFilteredSpend)} description="Total in the current result set" />
-        <MetricCard eyebrow="Visible entries" value={expenses.length} description="Shown in the current table" />
-        <MetricCard eyebrow="Categories" value={categories.length} description={`${customCategories.length} custom categories`} />
-      </div>
 
       {/* Expense form + Category manager side by side */}
       <div className="workspace-grid">
@@ -313,26 +361,47 @@ export default function ExpensesPage() {
               {/* Existing categories as chips */}
               {categories.length > 0 && (
                 <div>
-                  {defaultCategories.length > 0 && (
+                  {customCategories.length > 0 ? (
                     <div style={{ marginBottom: "0.75rem" }}>
-                      <p className="eyebrow" style={{ marginBottom: "0.5rem" }}>Default</p>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
-                        {defaultCategories.map((cat) => (
-                          <span key={cat.id} className="status-pill">{cat.name}</span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {customCategories.length > 0 && (
-                    <div>
-                      <p className="eyebrow" style={{ marginBottom: "0.5rem" }}>Custom</p>
+                      <p className="eyebrow" style={{ marginBottom: "0.5rem" }}>Custom categories</p>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
                         {customCategories.map((cat) => (
                           <span key={cat.id} className="mini-chip mini-chip--accent">{cat.name}</span>
                         ))}
                       </div>
                     </div>
+                  ) : (
+                    <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.88rem" }}>
+                      No custom categories yet
+                    </p>
                   )}
+                  {defaultCategories.length > 0 ? (
+                    <div style={{ marginTop: "0.75rem" }}>
+                      <button
+                        type="button"
+                        className="text-button"
+                        onClick={() => setShowDefaultCategories((v) => !v)}
+                        style={{ fontSize: "0.8rem", marginBottom: showDefaultCategories ? "0.5rem" : 0 }}
+                      >
+                        {showDefaultCategories
+                          ? "Hide default categories"
+                          : `Show default categories (${defaultCategories.length})`}
+                      </button>
+                      {showDefaultCategories ? (
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginTop: "0.5rem" }}>
+                          {defaultCategories.map((cat) => (
+                            <span
+                              key={cat.id}
+                              className="status-pill"
+                              style={{ background: "rgba(20,33,28,0.06)", color: "var(--muted)", fontWeight: 500 }}
+                            >
+                              {cat.name}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
               )}
 
@@ -355,8 +424,8 @@ export default function ExpensesPage() {
                       required
                     />
                   </label>
-                  <Button type="submit" variant="secondary" size="sm">
-                    Add
+                  <Button type="submit" variant="primary" size="sm">
+                    Add category
                   </Button>
                 </form>
               </div>
@@ -448,8 +517,21 @@ export default function ExpensesPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {paginatedExpenses.map((expense) => (
-                      <tr key={expense.id} style={editingId === expense.id ? { background: "rgba(23,123,90,0.06)" } : {}}>
+                    {paginatedExpenses.map((expense) => {
+                      const isEditing = editingId === expense.id;
+                      const isHighlighted = Number(highlightedExpenseId) === Number(expense.id);
+                      return (
+                      <tr
+                        id={`expense-row-${expense.id}`}
+                        key={expense.id}
+                        style={
+                          isHighlighted
+                            ? { background: "rgba(23,123,90,0.15)" }
+                            : isEditing
+                              ? { background: "rgba(23,123,90,0.06)" }
+                              : {}
+                        }
+                      >
                         <td style={{ whiteSpace: "nowrap" }}>{formatDateLabel(expense.expenseDate)}</td>
                         <td>{expense.categoryName}</td>
                         <td style={{ whiteSpace: "nowrap" }}><strong>{formatCurrency(expense.amount)}</strong></td>
@@ -470,7 +552,7 @@ export default function ExpensesPage() {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                    )})}
                   </tbody>
                 </table>
               </div>

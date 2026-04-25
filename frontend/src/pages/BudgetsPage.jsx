@@ -16,6 +16,15 @@ import {
 } from "../utils/formatters";
 
 const initialForm = { amount: "", categoryId: "" };
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+function getYearOptions() {
+  const current = new Date().getFullYear();
+  return [current - 1, current, current + 1];
+}
 
 function getBudgetBarColor(pct) {
   if (pct >= 100) return "var(--danger)";
@@ -144,19 +153,40 @@ export default function BudgetsPage() {
       <Card soft>
         <CardHeader>
           <CardTitle eyebrow="Month selector">Budget month</CardTitle>
-          <span className="text-sm font-semibold text-[#177b5a] bg-emerald-50 px-3 py-1 rounded-full">
+          <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--accent-dark)", background: "rgba(23,123,90,0.1)", padding: "0.3rem 0.85rem", borderRadius: "999px" }}>
             {formatMonthLabel(selectedMonth)}
           </span>
         </CardHeader>
         <CardContent>
-          <div style={{ maxWidth: "320px" }}>
+          <div className="field-grid" style={{ maxWidth: "460px" }}>
             <label>
               Month
-              <input
-                type="month"
-                value={selectedMonth}
-                onChange={(event) => setSelectedMonth(event.target.value)}
-              />
+              <select
+                value={selectedMonth.split("-")[1]}
+                onChange={(e) => {
+                  const [year] = selectedMonth.split("-");
+                  setSelectedMonth(`${year}-${e.target.value}`);
+                }}
+              >
+                {MONTH_NAMES.map((name, idx) => {
+                  const val = String(idx + 1).padStart(2, "0");
+                  return <option key={val} value={val}>{name}</option>;
+                })}
+              </select>
+            </label>
+            <label>
+              Year
+              <select
+                value={selectedMonth.split("-")[0]}
+                onChange={(e) => {
+                  const [, month] = selectedMonth.split("-");
+                  setSelectedMonth(`${e.target.value}-${month}`);
+                }}
+              >
+                {getYearOptions().map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
             </label>
           </div>
         </CardContent>
@@ -190,7 +220,7 @@ export default function BudgetsPage() {
       <div className="workspace-grid">
         <Card soft>
           <CardHeader>
-            <CardTitle eyebrow="Save budget">New budget for {formatMonthLabel(selectedMonth)}</CardTitle>
+            <CardTitle eyebrow="Save budget">Set budget</CardTitle>
           </CardHeader>
           <CardContent>
             <form className="stack-form" onSubmit={handleSubmit}>

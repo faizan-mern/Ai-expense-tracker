@@ -118,13 +118,6 @@ export default function DashboardPage() {
       dateLabel: formatDateLabel(expenseDate),
     }))
     .sort((left, right) => left.expenseDate.localeCompare(right.expenseDate));
-  const topSpendDays = [...dailySpendData]
-    .sort((left, right) => right.amount - left.amount)
-    .slice(0, 5);
-  const activeSpendDays = dailySpendData.length;
-  const averageDailySpend =
-    activeSpendDays > 0 ? totalSpent / activeSpendDays : 0;
-  const highestSpendDay = topSpendDays[0] || null;
   const dailySpendChartData = dailySpendData.reduce((accumulator, day) => {
     const previousCumulative = accumulator.length > 0
       ? accumulator[accumulator.length - 1].cumulativeSpent
@@ -203,7 +196,7 @@ export default function DashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle eyebrow="Daily spend">Summary</CardTitle>
-          <span className="text-sm text-[#63736b]">
+          <span className="text-sm" style={{ color: "var(--muted)" }}>
             {formatMonthLabel(currentMonth)}
           </span>
         </CardHeader>
@@ -217,7 +210,7 @@ export default function DashboardPage() {
               <div style={{ width: "100%" }}>
                 <ResponsiveContainer width="100%" height={180}>
                   <BarChart data={dailySpendChartData}>
-                    <XAxis dataKey="dateLabel" interval={2} />
+                    <XAxis dataKey="dateLabel" interval="preserveStartEnd" />
                     <YAxis hide={true} />
                     <Tooltip
                       formatter={(value) => formatCurrency(value)}
@@ -256,68 +249,6 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="workspace-grid workspace-grid--dashboard-summary">
-                <div className="stack-group">
-                  <article className="budget-card">
-                    <div className="budget-card__header">
-                      <div>
-                        <strong className="text-sm">Highest spend day</strong>
-                        <span className="text-xs text-[#63736b]">
-                          Largest total recorded this month
-                        </span>
-                      </div>
-                      <strong className="text-sm">
-                        {highestSpendDay
-                          ? formatCurrency(highestSpendDay.amount)
-                          : formatCurrency(0)}
-                      </strong>
-                    </div>
-                    <div className="budget-card__meta">
-                      <span>{highestSpendDay?.dateLabel || "No data"}</span>
-                      <span>{activeSpendDays} active days</span>
-                    </div>
-                  </article>
-
-                  <article className="budget-card">
-                    <div className="budget-card__header">
-                      <div>
-                        <strong className="text-sm">Average active day</strong>
-                        <span className="text-xs text-[#63736b]">
-                          Mean spend across days with activity
-                        </span>
-                      </div>
-                      <strong className="text-sm">
-                        {formatCurrency(averageDailySpend)}
-                      </strong>
-                    </div>
-                    <div className="budget-card__meta">
-                      <span>{dailySpendData.length} days with spend</span>
-                      <span>{state.expenses.length} total expenses</span>
-                    </div>
-                  </article>
-                </div>
-
-                <div>
-                  <p className="eyebrow">Top spend days</p>
-                  <ul className="data-list" style={{ marginTop: "0.85rem" }}>
-                    {topSpendDays.map((day) => (
-                      <li key={day.expenseDate}>
-                        <div>
-                          <strong className="text-sm">{day.dateLabel}</strong>
-                          <span className="text-sm text-[#63736b]">
-                            Daily total
-                          </span>
-                        </div>
-                        <div className="list-meta">
-                          <strong className="text-sm">
-                            {formatCurrency(day.amount)}
-                          </strong>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
             </div>
           )}
         </CardContent>
@@ -330,7 +261,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle eyebrow="Recent activity">Latest expenses</CardTitle>
             <div style={{ display: "grid", justifyItems: "end", gap: "0.25rem" }}>
-              <span className="text-sm text-[#63736b]">
+              <span className="text-sm" style={{ color: "var(--muted)" }}>
                 {state.expenses.length} this month
               </span>
               <Link to="/expenses" style={viewAllLinkStyle}>
@@ -351,7 +282,7 @@ export default function DashboardPage() {
                   <li key={expense.id}>
                     <div>
                       <strong className="text-sm">{expense.categoryName}</strong>
-                      <span className="text-sm text-[#63736b]">
+                      <span className="text-sm" style={{ color: "var(--muted)" }}>
                         {expense.note || "Expense entry"}
                       </span>
                     </div>
@@ -391,7 +322,7 @@ export default function DashboardPage() {
                           <strong className="text-sm">
                             {budget.categoryName || "Overall monthly budget"}
                           </strong>
-                          <span className="text-xs text-[#63736b]">
+                          <span className="text-xs" style={{ color: "var(--muted)" }}>
                             {formatMonthLabel(budget.budgetMonth)}
                           </span>
                         </div>
@@ -406,10 +337,10 @@ export default function DashboardPage() {
                         />
                       </div>
                       <div className="budget-card__meta">
-                        <span className="text-xs text-[#63736b]">
+                        <span className="text-xs" style={{ color: "var(--muted)" }}>
                           Spent {formatCurrency(budget.spent)}
                         </span>
-                        <span className="text-xs text-[#63736b]">
+                        <span className="text-xs" style={{ color: "var(--muted)" }}>
                           Budget {formatCurrency(budget.amount)}
                         </span>
                       </div>
@@ -427,7 +358,7 @@ export default function DashboardPage() {
         <CardHeader>
           <CardTitle eyebrow="Alerts">Latest signals</CardTitle>
           <div style={{ display: "grid", justifyItems: "end", gap: "0.25rem" }}>
-            <span className="text-sm text-[#63736b]">
+            <span className="text-sm" style={{ color: "var(--muted)" }}>
               {state.alerts.length} total
             </span>
             <Link to="/alerts" style={viewAllLinkStyle}>
@@ -448,9 +379,9 @@ export default function DashboardPage() {
                 <li key={alert.id}>
                   <div>
                     <strong className="text-sm capitalize">
-                      {alert.alertType.replace(/_/g, " ")}
+                      {({ near_limit: "Approaching limit", budget_exceeded: "Budget exceeded", unusual_expense: "Unusual spend" })[alert.alertType] ?? alert.alertType.replace(/_/g, " ")}
                     </strong>
-                    <span className="text-sm text-[#63736b]">
+                    <span className="text-sm" style={{ color: "var(--muted)" }}>
                       {alert.message}
                     </span>
                   </div>

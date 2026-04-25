@@ -140,7 +140,7 @@ export default function AlertsPage() {
             </p>
           </div>
           <strong className="text-sm">{alert.message}</strong>
-          <small className="text-[#63736b]">
+          <small style={{ color: "var(--muted)" }}>
             {formatDateTimeLabel(alert.createdAt)}
           </small>
         </div>

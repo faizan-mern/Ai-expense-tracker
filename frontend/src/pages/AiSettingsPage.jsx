@@ -22,14 +22,23 @@ const FALLBACK_MODEL_OPTIONS = [
   { id: "nvidia/nemotron-nano-12b-v2-vl:free", name: "Nemotron Nano 12B (Free)" },
 ];
 
+const PROVIDER_NAMES = {
+  openai: "OpenAI",
+  anthropic: "Anthropic",
+  google: "Google",
+  mistralai: "Mistral",
+  nvidia: "NVIDIA",
+  inclusionai: "InclusionAI",
+};
+
 function formatModelLabel(modelId) {
   if (!modelId) return modelId;
   const slashIdx = modelId.indexOf("/");
   if (slashIdx === -1) return modelId;
   const provider = modelId.slice(0, slashIdx);
-  const model = modelId.slice(slashIdx + 1);
-  const providerLabel = provider.charAt(0).toUpperCase() + provider.slice(1);
-  return `${model} - ${providerLabel}`;
+  const model = modelId.slice(slashIdx + 1).replace(/:free$/, " (Free)");
+  const providerLabel = PROVIDER_NAMES[provider] || provider.charAt(0).toUpperCase() + provider.slice(1);
+  return `${model} — ${providerLabel}`;
 }
 
 function getModelId(modelOption) {
@@ -177,6 +186,17 @@ export default function AiSettingsPage() {
       settings.modelName || DEFAULT_MODEL,
     ]
   );
+  const groupedModels = visibleModels.reduce((groups, model) => {
+    const modelId = getModelId(model);
+    const provider = modelId.includes("/") ? modelId.split("/")[0] : "other";
+    const providerLabel = PROVIDER_NAMES[provider] || provider.charAt(0).toUpperCase() + provider.slice(1);
+    if (!groups[providerLabel]) groups[providerLabel] = [];
+    groups[providerLabel].push(model);
+    return groups;
+  }, {});
+  Object.values(groupedModels).forEach((group) =>
+    group.sort((a, b) => getModelLabel(a).localeCompare(getModelLabel(b)))
+  );
 
   return (
     <section className="page">
@@ -192,29 +212,6 @@ export default function AiSettingsPage() {
           {formatModelLabel(settings.modelName || DEFAULT_MODEL)}
         </Badge>
       </header>
-
-      <Card soft>
-        <CardHeader>
-          <CardTitle eyebrow="Connection">Current provider</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="stack-group stack-group--compact">
-            <p className="empty-state">
-              Personal settings override the backend defaults for this account.
-            </p>
-            <div className="kv-grid">
-              <div>
-                <span className="kv-label">Base URL</span>
-                <strong>{settings.baseURL || "Backend default"}</strong>
-              </div>
-              <div>
-                <span className="kv-label">Saved key</span>
-                <strong>{settings.apiKey ? "Configured" : "No personal key saved"}</strong>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {error ? (
         <div className="form-error">
@@ -274,16 +271,17 @@ export default function AiSettingsPage() {
                       }))
                     }
                   >
-                    {visibleModels.map((modelOption) => {
-                      const modelId = getModelId(modelOption);
-                      const modelLabel = getModelLabel(modelOption);
-
-                      return (
-                        <option key={modelId} value={modelId}>
-                          {modelLabel}
-                        </option>
-                      );
-                    })}
+                    {Object.entries(groupedModels)
+                      .sort(([a], [b]) => a.localeCompare(b))
+                      .map(([providerLabel, providerModels]) => (
+                        <optgroup key={providerLabel} label={providerLabel}>
+                          {providerModels.map((modelOption) => {
+                            const modelId = getModelId(modelOption);
+                            const modelLabel = getModelLabel(modelOption);
+                            return <option key={modelId} value={modelId}>{modelLabel}</option>;
+                          })}
+                        </optgroup>
+                      ))}
                   </select>
                 </label>
                 <p className="field-note">

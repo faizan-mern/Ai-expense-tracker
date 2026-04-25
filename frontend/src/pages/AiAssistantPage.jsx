@@ -1,25 +1,16 @@
 import { AlertCircle, ArrowRight, Loader2, Settings2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { fetchAiSettings, parseExpenseWithAi } from "../api/aiApi";
+import { parseExpenseWithAi } from "../api/aiApi";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card";
 import { useToast } from "../components/ui/Toast";
 import { formatCurrency, formatDateLabel } from "../utils/formatters";
 
-function formatModelLabel(modelId) {
-  if (!modelId) return modelId;
-  const slashIdx = modelId.indexOf("/");
-  if (slashIdx === -1) return modelId;
-  const provider = modelId.slice(0, slashIdx);
-  const model = modelId.slice(slashIdx + 1);
-  return `${model} (${provider.charAt(0).toUpperCase() + provider.slice(1)})`;
-}
-
 const samplePrompts = [
-  "I spent 2400 on groceries today",
-  "Paid 18000 rent on the first of this month",
-  "Spent 650 on transport yesterday",
+  "I spent 850 on biryani today",
+  "Paid 450 for Uber yesterday",
+  "3200 on groceries this week",
 ];
 
 export default function AiAssistantPage() {
@@ -28,47 +19,31 @@ export default function AiAssistantPage() {
   const [result, setResult] = useState(null);
   const [lastUserMessage, setLastUserMessage] = useState("");
   const [error, setError] = useState("");
-  const [configError, setConfigError] = useState("");
-  const [config, setConfig] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const scrollAnchorRef = useRef(null);
 
   useEffect(() => {
-    let isCancelled = false;
-
-    async function loadSettings() {
-      try {
-        const response = await fetchAiSettings();
-        if (!isCancelled) {
-          setConfig(response.settings || null);
-        }
-      } catch (loadError) {
-        if (!isCancelled) {
-          setConfigError(loadError.message);
-        }
-      }
-    }
-
-    loadSettings();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, []);
+    scrollAnchorRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isSubmitting]);
 
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
     setResult(null);
     setLastUserMessage(String(text || "").trim());
+    setMessages((prev) => [...prev, { type: "user", text: String(text || "").trim() }]);
     setIsSubmitting(true);
 
     try {
       const response = await parseExpenseWithAi({ text });
       setResult(response);
+      setMessages((prev) => [...prev, { type: "result", expense: response.expense }]);
       setText("");
       showToast("Expense created via AI", "success");
     } catch (submitError) {
       setError(submitError.message);
+      setMessages((prev) => [...prev, { type: "error", text: submitError.message }]);
     } finally {
       setIsSubmitting(false);
     }
@@ -93,179 +68,111 @@ export default function AiAssistantPage() {
         </Link>
       </header>
 
-      <div className="workspace-grid workspace-grid--assistant">
-        <Card soft>
-          <CardHeader>
-            <CardTitle eyebrow="Input">Describe an expense</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form className="stack-form" onSubmit={handleSubmit}>
-              <textarea
-                rows="5"
-                value={text}
-                onChange={(event) => setText(event.target.value)}
-                placeholder="I spent 500 on food today"
-                required
-              />
+      <Card>
+        <CardHeader>
+          <CardTitle eyebrow="Assistant">AI expense parser</CardTitle>
+          {messages.length > 0 && (
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => { setMessages([]); setResult(null); setError(""); setLastUserMessage(""); }}
+              style={{ fontSize: "0.8rem" }}
+            >
+              Clear
+            </button>
+          )}
+        </CardHeader>
+        <CardContent style={{ padding: 0 }}>
+          <form onSubmit={handleSubmit}>
+            <div
+              className="ai-chat-scroll"
+              style={{
+                height: 320,
+                overflowY: "auto",
+                padding: "0.75rem 1rem",
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.65rem",
+              }}
+            >
+              {messages.length === 0 && !isSubmitting && (
+                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <p style={{ margin: 0, color: "var(--muted)", textAlign: "center", fontSize: "0.9rem" }}>
+                    Describe a purchase in plain language to create an expense entry.
+                  </p>
+                </div>
+              )}
 
+              {messages.map((msg, idx) => {
+                if (msg.type === "user") return (
+                  <div key={idx} style={{ justifySelf: "end", alignSelf: "flex-end", maxWidth: "88%", background: "rgba(23,123,90,0.12)", color: "var(--text)", borderRadius: "14px 14px 4px 14px", padding: "0.6rem 0.8rem", fontSize: "0.9rem" }}>
+                    {msg.text}
+                  </div>
+                );
+                if (msg.type === "result") return (
+                  <div key={idx} style={{ alignSelf: "flex-start", maxWidth: "88%", borderRadius: "4px 14px 14px 14px", border: "1px solid var(--border)", background: "var(--surface-strong)", padding: "0.75rem 0.85rem" }}>
+                    <div className="kv-grid">
+                      <div><span className="kv-label">Amount</span><strong>{formatCurrency(msg.expense.amount)}</strong></div>
+                      <div><span className="kv-label">Category</span><strong>{msg.expense.categoryName}</strong></div>
+                      <div><span className="kv-label">Date</span><strong>{formatDateLabel(msg.expense.expenseDate)}</strong></div>
+                      <div><span className="kv-label">Note</span><strong>{msg.expense.note || "None"}</strong></div>
+                    </div>
+                    {msg.expense?.id && (
+                      <div style={{ marginTop: "0.65rem" }}>
+                        <Link to={`/expenses?focusExpenseId=${msg.expense.id}`} style={{ color: "var(--accent-dark)", fontSize: "0.84rem", fontWeight: 700 }}>View expense &rarr;</Link>
+                      </div>
+                    )}
+                  </div>
+                );
+                if (msg.type === "error") return (
+                  <div key={idx} style={{ alignSelf: "flex-start", maxWidth: "88%", borderLeft: "3px solid var(--danger)", background: "rgba(185,80,59,0.07)", borderRadius: "0 12px 12px 0", padding: "0.65rem 0.8rem", fontSize: "0.88rem", color: "var(--text)" }}>
+                    {msg.text}
+                  </div>
+                );
+                return null;
+              })}
+
+              {isSubmitting && (
+                <>
+                  <div className="ai-thinking-bubble">
+                    <span className="ai-thinking-dot" style={{ animationDelay: "0ms" }} />
+                    <span className="ai-thinking-dot" style={{ animationDelay: "150ms" }} />
+                    <span className="ai-thinking-dot" style={{ animationDelay: "300ms" }} />
+                  </div>
+                </>
+              )}
+
+              <div ref={scrollAnchorRef} />
+            </div>
+
+            <div style={{ borderTop: "1px solid var(--border)", padding: "0.6rem 0.75rem 0" }}>
               <div className="sample-prompt-row">
                 {samplePrompts.map((prompt) => (
-                  <button
-                    key={prompt}
-                    type="button"
-                    className="chip-button"
-                    onClick={() => setText(prompt)}
-                  >
+                  <button key={prompt} type="button" className="chip-button" onClick={() => setText(prompt)} disabled={isSubmitting}>
                     {prompt}
                   </button>
                 ))}
               </div>
+            </div>
 
-              {error ? (
-                <div className="form-error">
-                  <AlertCircle size={18} />
-                  <p>{error}</p>
-                </div>
-              ) : null}
-
-              <Button type="submit" variant="primary" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <Loader2 size={15} className="spin" />
-                ) : (
-                  <ArrowRight size={15} />
-                )}
-                {isSubmitting ? "Creating expense..." : "Create expense"}
+            <div style={{ display: "flex", gap: "0.5rem", padding: "0.5rem 0.75rem 0.75rem", alignItems: "center" }}>
+              <input
+                type="text"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="I spent 500 on food today"
+                required
+                disabled={isSubmitting}
+                style={{ flex: 1 }}
+              />
+              <Button type="submit" variant="primary" disabled={isSubmitting} style={{ width: 110, justifyContent: "center" }}>
+                {isSubmitting ? <Loader2 size={15} className="spin" /> : <ArrowRight size={15} />}
+                {isSubmitting ? "Sending..." : "Send"}
               </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        <div className="detail-column">
-          <Card>
-            <CardHeader>
-              <CardTitle eyebrow="Parser status">Current setup</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {configError ? (
-                <div className="form-error">
-                  <AlertCircle size={18} />
-                  <p>{configError}</p>
-                </div>
-              ) : !config ? (
-                <div className="loading-pulse">Loading AI settings...</div>
-              ) : (
-                <div className="stack-group stack-group--compact">
-                  <div className="kv-grid">
-                    <div>
-                      <span className="kv-label">Model</span>
-                      <strong>
-                        {formatModelLabel(config.modelName || config.model) ||
-                          "Default backend model"}
-                      </strong>
-                    </div>
-                    <div>
-                      <span className="kv-label">API key</span>
-                      <strong>
-                        {config.apiKey ? "Configured" : "Using backend default"}
-                      </strong>
-                    </div>
-                  </div>
-                  <div className="prompt-preview">
-                    <span className="kv-label">System prompt</span>
-                    <p>{config.systemPrompt || "No custom instructions saved."}</p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle eyebrow="Saved entry">Result</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isSubmitting && lastUserMessage ? (
-                <div className="stack-group stack-group--compact">
-                  <div
-                    style={{
-                      justifySelf: "end",
-                      maxWidth: "90%",
-                      background: "rgba(23, 123, 90, 0.12)",
-                      color: "var(--text)",
-                      borderRadius: "12px",
-                      padding: "0.6rem 0.75rem",
-                      fontSize: "0.9rem",
-                    }}
-                  >
-                    {lastUserMessage}
-                  </div>
-                  <div className="ai-thinking-bubble">
-                    <span
-                      className="ai-thinking-dot"
-                      style={{ animationDelay: "0ms" }}
-                    />
-                    <span
-                      className="ai-thinking-dot"
-                      style={{ animationDelay: "150ms" }}
-                    />
-                    <span
-                      className="ai-thinking-dot"
-                      style={{ animationDelay: "300ms" }}
-                    />
-                  </div>
-                </div>
-              ) : !result ? (
-                <p className="empty-state">
-                  The saved expense will appear here after submission.
-                </p>
-              ) : (
-                <>
-                <ul className="data-list">
-                  <li>
-                    <div>
-                      <span className="kv-label">Amount</span>
-                      <strong>{formatCurrency(result.expense.amount)}</strong>
-                    </div>
-                  </li>
-                  <li>
-                    <div>
-                      <span className="kv-label">Category</span>
-                      <strong>{result.expense.categoryName}</strong>
-                    </div>
-                  </li>
-                  <li>
-                    <div>
-                      <span className="kv-label">Date</span>
-                      <strong>{formatDateLabel(result.expense.expenseDate)}</strong>
-                    </div>
-                  </li>
-                  <li>
-                    <div>
-                      <span className="kv-label">Note</span>
-                      <strong>{result.expense.note || "None"}</strong>
-                    </div>
-                  </li>
-                </ul>
-                {result.expense?.id ? (
-                  <div style={{ marginTop: "0.8rem" }}>
-                    <Link
-                      to="/expenses"
-                      style={{
-                        color: "var(--accent-dark)",
-                        fontSize: "0.86rem",
-                        fontWeight: 700,
-                      }}
-                    >
-                      View expense &rarr;
-                    </Link>
-                  </div>
-                ) : null}
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
       <style>{`
         .ai-thinking-bubble {
           display: inline-flex;

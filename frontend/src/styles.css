@@ -100,6 +100,20 @@ select {
   white-space: nowrap;
 }
 
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2363736b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.9rem center;
+  padding-right: 2.5rem;
+}
+
+select::-ms-expand {
+  display: none;
+}
+
 input:focus,
 select:focus,
 textarea:focus {
@@ -321,11 +335,6 @@ label {
 
 .workspace-grid--assistant {
   grid-template-columns: minmax(0, 1.2fr) minmax(340px, 0.8fr);
-}
-
-.workspace-grid--dashboard-summary {
-  grid-template-columns: minmax(260px, 0.9fr) minmax(0, 1.1fr);
-  align-items: start;
 }
 
 .field-grid {
@@ -617,7 +626,7 @@ tbody tr:nth-child(even) {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #177b5a 0%, #46b28b 100%);
+  background: var(--accent);
 }
 
 .alert-eyebrow {
@@ -674,10 +683,17 @@ tbody tr:nth-child(even) {
   line-height: 1.55;
 }
 
-.detail-column {
-  display: grid;
-  gap: var(--space-4);
-  align-content: start;
+.ai-chat-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.ai-chat-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ai-chat-scroll::-webkit-scrollbar-thumb {
+  background: rgba(20, 33, 28, 0.12);
+  border-radius: 999px;
 }
 
 pre {
@@ -789,7 +805,6 @@ pre {
   .metric-grid,
   .workspace-grid,
   .workspace-grid--assistant,
-  .workspace-grid--dashboard-summary,
   .field-grid,
   .field-grid--filters,
   .field-grid--month,
