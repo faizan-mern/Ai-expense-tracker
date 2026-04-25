@@ -3,6 +3,7 @@ const cors = require("cors");
 const rateLimit = require("express-rate-limit");
 require("./config/env");
 
+// Fail fast if required env vars are still set to template placeholders.
 const ENV_PLACEHOLDERS = {
   DATABASE_URL: "postgresql://postgres:your_password@localhost:5432/ai_expense_tracker",
   JWT_SECRET: "replace_with_a_long_random_secret",
