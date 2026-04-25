@@ -18,7 +18,6 @@ const FALLBACK_MODEL_OPTIONS = [
   { id: "inclusionai/ling-2.6-flash:free", name: "Ling 2.6 Flash (Free)" },
   { id: "nvidia/nemotron-3-super-120b-a12b:free", name: "Nemotron Super 120B (Free)" },
   { id: "nvidia/nemotron-3-nano-30b-a3b:free", name: "Nemotron Nano 30B (Free)" },
-  { id: "nvidia/nemotron-nano-9b-v2:free", name: "Nemotron Nano 9B (Free)" },
   { id: "nvidia/nemotron-nano-12b-v2-vl:free", name: "Nemotron Nano 12B (Free)" },
 ];
 
@@ -256,7 +255,7 @@ export default function AiSettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle eyebrow="Model">Active model</CardTitle>
-              <Badge variant="muted">8 models</Badge>
+              <Badge variant="muted">7 models</Badge>
             </CardHeader>
             <CardContent>
               <div className="stack-form">

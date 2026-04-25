@@ -1,13 +1,47 @@
+# Dependencies
 node_modules/
+**/node_modules/
+
+# Environment files — never commit real credentials
 .env
-.env.*
+.env.local
+.env.production
+.env.staging
+**/.env
+**/.env.local
+
+# Keep example files
 !backend/.env.example
 !frontend/.env.example
-docs/
+
+# Build output
 dist/
+build/
 coverage/
+
+# Logs
 *.log
-*.tmp
+npm-debug.log*
+
+# OS files
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# Editor/IDE
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Claude Code internal
 .claude/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Local-only docs
+docs/
