@@ -4,6 +4,10 @@ Full-stack web application for daily expense tracking, budget management, smart 
 
 This project is prepared as a company assignment submission.
 
+## Reviewer Note
+
+Use the setup steps below with your own `.env` values from `.env.example` files.
+
 ## Goal
 
 Users can:
