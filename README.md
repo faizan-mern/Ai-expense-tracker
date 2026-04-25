@@ -186,17 +186,6 @@ npm run db:check
 - Database setup guide: `backend/sql/README.md`
 - Environment setup guide: this `README.md`
 - README: this file
-- Demo video (5-10 minutes, Urdu): record running app and cover core features + AI flow
-
-## Demo Video Script (Suggested)
-
-1. Project intro and stack
-2. Registration and login
-3. Expense add/edit/delete/filter
-4. Category and budget setup
-5. Alerts behavior
-6. AI expense parsing with natural language
-7. Quick code walkthrough and run steps
 
 ## Security Notes
 
