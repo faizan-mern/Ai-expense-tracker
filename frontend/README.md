@@ -11,7 +11,7 @@ npm install
 npm run dev
 ```
 
-App runs at `http://localhost:5173`. API requests are proxied to `http://localhost:5000` by Vite automatically.
+App runs at `http://localhost:5173`.
 
 ## Build
 
@@ -19,13 +19,19 @@ App runs at `http://localhost:5173`. API requests are proxied to `http://localho
 npm run build
 ```
 
-Output goes to `dist/`. Preview the build with `npm run preview`.
+Output is generated in `dist/`. Preview it with:
+
+```bash
+npm run preview
+```
 
 ## Environment
 
-Copy `.env.example` to `.env`. For local development no changes are needed — Vite proxies API calls to the backend automatically.
+Copy `.env.example` to `.env`.
 
-If you need to point to a remote backend, set:
+For local development, no extra values are required. Vite proxies `/api` calls to `http://localhost:5000`.
+
+If you want to use a remote backend, set:
 
 ```env
 VITE_API_BASE_URL=https://your-backend-url.com
