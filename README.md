@@ -7,7 +7,7 @@ This project is prepared as a company assignment submission.
 ## Reviewer Note
 
 Use the setup steps below with your own `.env` values from `.env.example` files.
-For quickest verification, start with backend `/api/health` and then open the frontend app.
+For quickest verification, start with `GET /api/health`, confirm the backend is running, then open the frontend.
 
 ## Goal
 
