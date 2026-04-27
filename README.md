@@ -192,6 +192,12 @@ npm run db:check
 - Environment setup guide: this `README.md`
 - README: this file
 
+## Troubleshooting
+
+- **CORS errors**: make sure `FRONTEND_URL` in `backend/.env` matches the frontend URL exactly (default: `http://localhost:5173`)
+- **DB connection fails**: confirm `DATABASE_URL` is a valid PostgreSQL connection string and the DB is running
+- **AI not parsing**: check that your OpenRouter API key is saved in AI Settings inside the app, not just in `.env`
+
 ## Security Notes
 
 - Never commit real `.env` files
