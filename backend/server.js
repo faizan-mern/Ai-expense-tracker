@@ -56,6 +56,7 @@ app.get("/api/health", (req, res) => {
     success: true,
     message: "Backend is healthy",
     service: "ai-expense-tracker-backend",
+    timestamp: new Date().toISOString(),
   });
 });
 
